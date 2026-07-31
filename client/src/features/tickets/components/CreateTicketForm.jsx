@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Plus, X } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Link } from "../../../lib/router.jsx";
@@ -84,10 +85,12 @@ const CreateTicketForm = ({ isLoading, onSubmit, uploadProgress = 0 }) => {
         />
 
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button variant="secondary" className="w-full sm:w-auto">
-            <Link to="/customer/tickets">Cancel</Link>
+          <Button as={Link} to="/customer/tickets" variant="secondary" className="w-full sm:w-auto">
+            <X className="h-4 w-4" />
+            Cancel
           </Button>
-          <Button type="submit" isLoading={isLoading} className="w-full sm:w-auto">
+          <Button type="submit" isLoading={isLoading} className="w-full text-white sm:w-auto">
+            <Plus className="h-4 w-4" />
             Create Ticket
           </Button>
         </div>

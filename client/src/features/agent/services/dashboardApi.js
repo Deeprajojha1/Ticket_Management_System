@@ -39,7 +39,7 @@ export const dashboardApi = createApi({
       query: () => ({ url: "/dashboard/charts/monthly", method: "GET" }),
     }),
     allTickets: builder.query({
-      query: (params = {}) => ({ url: "/dashboard/tickets", method: "GET", params }),
+      query: (params = {}) => ({ url: "/agent/tickets", method: "GET", params }),
       providesTags: ["AgentTickets"],
     }),
     assignedTickets: builder.query({

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "../../../lib/router.jsx";
 import { motion } from "framer-motion";
-import { Plus, Search } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plus, RefreshCw, Search } from "lucide-react";
 import Button from "../../../components/common/Button/Button.jsx";
 import Card from "../../../components/common/Card/Card.jsx";
 import { SORT_OPTIONS, TICKET_CATEGORIES, TICKET_PRIORITIES, TICKET_STATUSES } from "../constants.js";
@@ -85,9 +85,18 @@ const MyTickets = () => {
           Page {pagination.currentPage || 1} of {pagination.totalPages || 1}
         </p>
         <div className="flex items-center gap-2">
-          <Button variant="secondary" disabled={!pagination.previousPage} onClick={() => setFilters((current) => ({ ...current, page: pagination.previousPage }))}>Previous</Button>
-          <Button variant="secondary" disabled={!pagination.nextPage} onClick={() => setFilters((current) => ({ ...current, page: pagination.nextPage }))}>Next</Button>
-          <Button variant="ghost" onClick={refetch}>Retry</Button>
+          <Button variant="secondary" disabled={!pagination.previousPage} onClick={() => setFilters((current) => ({ ...current, page: pagination.previousPage }))}>
+            <ArrowLeft className="h-4 w-4" />
+            Previous
+          </Button>
+          <Button variant="secondary" disabled={!pagination.nextPage} onClick={() => setFilters((current) => ({ ...current, page: pagination.nextPage }))}>
+            Next
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" onClick={refetch}>
+            <RefreshCw className="h-4 w-4" />
+            Retry
+          </Button>
         </div>
       </div>
     </motion.div>

@@ -13,6 +13,40 @@ const invalidateLiveData = (dispatch) => {
   dispatch(dashboardApi.util.invalidateTags(["AgentOverview", "AgentTickets", "AgentActivity", "Notifications"]));
 };
 
+const getEntityId = (value) => value?._id || value?.id || value?.toString?.();
+
+const updateCommentCache = (dispatch, payload = {}, action = "add") => {
+  const ticketId = getEntityId(payload.ticketId);
+  const comment = payload.comment;
+  if (!ticketId || !comment?._id) return;
+
+  dispatch(
+    ticketApi.util.updateQueryData("getComments", { ticketId, page: 1, limit: 50, sort: "oldest" }, (draft) => {
+      const comments = draft?.data?.comments;
+      if (!Array.isArray(comments)) return;
+
+      const existingIndex = comments.findIndex((item) => item._id === comment._id);
+      if (action === "delete") {
+        if (existingIndex >= 0) comments.splice(existingIndex, 1);
+        if (draft.data?.pagination?.totalDocuments !== undefined) {
+          draft.data.pagination.totalDocuments = Math.max(draft.data.pagination.totalDocuments - 1, 0);
+        }
+        return;
+      }
+
+      if (existingIndex >= 0) {
+        comments[existingIndex] = comment;
+        return;
+      }
+
+      comments.push(comment);
+      if (draft.data?.pagination?.totalDocuments !== undefined) {
+        draft.data.pagination.totalDocuments += 1;
+      }
+    }),
+  );
+};
+
 const requestBrowserNotification = (title, body) => {
   if (!("Notification" in window)) return;
   if (Notification.permission === "granted") {
@@ -72,10 +106,17 @@ const SocketProvider = ({ children }) => {
       if (payload.ticket) playNotificationSound();
     };
     const onComment = (payload = {}) => {
-      invalidateLiveData(dispatch);
+      updateCommentCache(dispatch, payload, "add");
+      dispatch(ticketApi.util.invalidateTags(["Tickets", { type: "Ticket", id: getEntityId(payload.ticketId) }]));
+      dispatch(dashboardApi.util.invalidateTags(["AgentOverview", "AgentTickets", "AgentActivity", "Notifications"]));
       toast.success("New comment received");
       requestBrowserNotification("New comment", payload.comment?.message || "A ticket has a new comment");
       playNotificationSound();
+    };
+    const onCommentDeleted = (payload = {}) => {
+      updateCommentCache(dispatch, payload, "delete");
+      dispatch(ticketApi.util.invalidateTags(["Tickets", { type: "Ticket", id: getEntityId(payload.ticketId) }]));
+      dispatch(dashboardApi.util.invalidateTags(["AgentOverview", "AgentTickets", "AgentActivity", "Notifications"]));
     };
     const onNotification = (payload = {}) => {
       dispatch(dashboardApi.util.invalidateTags(["Notifications", "AgentOverview", "AgentActivity"]));
@@ -103,7 +144,7 @@ const SocketProvider = ({ children }) => {
     socket.on(SOCKET_EVENTS.STATUS_CHANGED, onLiveTicket);
     socket.on(SOCKET_EVENTS.PRIORITY_CHANGED, onLiveTicket);
     socket.on(SOCKET_EVENTS.COMMENT_ADDED, onComment);
-    socket.on(SOCKET_EVENTS.COMMENT_DELETED, onComment);
+    socket.on(SOCKET_EVENTS.COMMENT_DELETED, onCommentDeleted);
     socket.on(SOCKET_EVENTS.NOTIFICATION_CREATED, onNotification);
     socket.on(SOCKET_EVENTS.SOCKET_ERROR, onSocketError);
     window.addEventListener("offline", onNetworkOffline);
@@ -129,7 +170,7 @@ const SocketProvider = ({ children }) => {
       socket.off(SOCKET_EVENTS.STATUS_CHANGED, onLiveTicket);
       socket.off(SOCKET_EVENTS.PRIORITY_CHANGED, onLiveTicket);
       socket.off(SOCKET_EVENTS.COMMENT_ADDED, onComment);
-      socket.off(SOCKET_EVENTS.COMMENT_DELETED, onComment);
+      socket.off(SOCKET_EVENTS.COMMENT_DELETED, onCommentDeleted);
       socket.off(SOCKET_EVENTS.NOTIFICATION_CREATED, onNotification);
       socket.off(SOCKET_EVENTS.SOCKET_ERROR, onSocketError);
       window.removeEventListener("offline", onNetworkOffline);

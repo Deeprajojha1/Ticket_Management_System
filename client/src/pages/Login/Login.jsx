@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
+import { HelpCircle, LogIn } from "lucide-react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { Link, useLocation, useNavigate } from "../../lib/router.jsx";
@@ -85,11 +86,13 @@ const Login = () => {
               />
               Remember me
             </label>
-            <button type="button" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
+            <button type="button" className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 hover:text-blue-800">
+              <HelpCircle className="h-3.5 w-3.5" />
               Forgot password?
             </button>
           </div>
           <Button type="submit" className="w-full" isLoading={isLoading}>
+            <LogIn className="h-4 w-4" />
             Login
           </Button>
         </form>

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Download } from "lucide-react";
 import toast from "react-hot-toast";
 import Button from "../../../components/common/Button/Button.jsx";
 import Card from "../../../components/common/Card/Card.jsx";
@@ -8,6 +9,7 @@ import TicketDetailsCard from "../../tickets/components/TicketDetailsCard.jsx";
 import TicketEmptyState from "../../tickets/components/TicketEmptyState.jsx";
 import TicketSkeleton from "../../tickets/components/TicketSkeleton.jsx";
 import { getApiErrorMessage } from "../../tickets/utils.js";
+import AgentTicketConversation from "../components/AgentTicketConversation.jsx";
 import AssignAgentModal from "../components/AssignAgentModal.jsx";
 import DashboardHeader from "../components/DashboardHeader.jsx";
 import Pagination from "../components/Pagination.jsx";
@@ -51,7 +53,10 @@ const AgentTickets = ({ assignedOnly = false }) => {
         <div className="mr-auto">
           <LiveStatusBadge label="Realtime table" />
         </div>
-        <Button variant="secondary" onClick={() => exportTicketsCsv(tickets)}>Export CSV</Button>
+        <Button variant="secondary" onClick={() => exportTicketsCsv(tickets)}>
+          <Download className="h-4 w-4" />
+          Export CSV
+        </Button>
       </div>
       <TicketFilters filters={filters} onChange={setFilters} />
       {isFetching ? <TicketSkeleton rows={6} /> : null}
@@ -59,14 +64,15 @@ const AgentTickets = ({ assignedOnly = false }) => {
       {!isFetching && !tickets.length ? <TicketEmptyState title="No tickets found" description="Try a broader search or remove filters." /> : null}
       <Pagination pagination={pagination} onPageChange={(page) => setFilters((current) => ({ ...current, page }))} />
       <AssignAgentModal isOpen={Boolean(assignTarget)} ticket={assignTarget} onClose={() => setAssignTarget(null)} onConfirm={confirmAssign} isLoading={isAssigning} />
-      <Modal isOpen={Boolean(detailsTarget)} onClose={() => setDetailsTarget(null)} title="Ticket Details">
+      <Modal isOpen={Boolean(detailsTarget)} onClose={() => setDetailsTarget(null)} title="Ticket Details" size="xl">
         {detailsTarget ? (
-          <div className="max-h-[75vh] overflow-y-auto">
+          <div className="max-h-[75vh] space-y-4 overflow-y-auto pr-1">
             <TicketDetailsCard ticket={detailsTarget} />
             <Card className="mt-4 p-4">
               <p className="text-sm font-semibold text-slate-900">Customer</p>
               <p className="mt-1 text-sm text-slate-600">{detailsTarget.createdBy?.fullName} - {detailsTarget.createdBy?.email}</p>
             </Card>
+            <AgentTicketConversation ticket={detailsTarget} />
           </div>
         ) : null}
       </Modal>

@@ -44,7 +44,10 @@ export const aiApi = createApi({
         data: toChatFormData(payload),
         headers: { "Content-Type": "multipart/form-data" },
       }),
-      invalidatesTags: ["AIConversations"],
+      invalidatesTags: (_result, _error, { conversationId }) => [
+        "AIConversations",
+        ...(conversationId ? [{ type: "AIConversation", id: conversationId }] : []),
+      ],
     }),
     transcribe: builder.mutation({
       query: (payload) => ({

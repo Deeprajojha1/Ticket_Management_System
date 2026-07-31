@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
+import { Headset, User, UserPlus } from "lucide-react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { Link, useNavigate } from "../../lib/router.jsx";
@@ -23,12 +24,8 @@ const schema = z
     fullName: z.string().min(2, "Full name is required").max(80, "Full name is too long"),
     email: z.string().email("Enter a valid email"),
     phone: z.string().min(7, "Enter a valid phone number"),
+    role: z.enum(["customer", "agent"]),
     password: passwordSchema,
-    confirmPassword: z.string().min(1, "Confirm your password"),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
   });
 
 const getErrorMessage = (error) =>
@@ -47,8 +44,8 @@ const Register = () => {
       fullName: "",
       email: "",
       phone: "",
+      role: "customer",
       password: "",
-      confirmPassword: "",
     },
   });
 
@@ -57,6 +54,7 @@ const Register = () => {
       fullName: formValues.fullName,
       email: formValues.email,
       phone: formValues.phone,
+      role: formValues.role,
       password: formValues.password,
     };
 
@@ -85,18 +83,36 @@ const Register = () => {
           <Input id="fullName" label="Full Name" error={errors.fullName?.message} {...register("fullName")} />
           <Input id="email" label="Email" type="email" error={errors.email?.message} {...register("email")} />
           <Input id="phone" label="Phone" type="tel" error={errors.phone?.message} {...register("phone")} />
-          <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-900">
-            Customer accounts can be created here. Agent access is provisioned by the support team.
-          </div>
           <PasswordInput id="password" label="Password" error={errors.password?.message} {...register("password")} />
-          <PasswordInput
-            id="confirmPassword"
-            label="Confirm Password"
-            error={errors.confirmPassword?.message}
-            {...register("confirmPassword")}
-          />
           <div className="sm:col-span-2">
-            <Button type="submit" className="w-full" isLoading={isLoading}>
+            <p className="mb-2 text-sm font-medium text-slate-700">Register as</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="focus-within:ring-focus flex cursor-pointer items-center gap-3 rounded-lg border border-slate-300 bg-white p-3 transition hover:border-blue-300 hover:bg-blue-50/40">
+                <input type="radio" value="customer" className="h-4 w-4 accent-blue-600" {...register("role")} />
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+                  <User className="h-4 w-4" />
+                </span>
+                <span>
+                  <span className="block text-sm font-semibold text-slate-950">Customer</span>
+                  <span className="block text-xs text-slate-500">Create and track tickets</span>
+                </span>
+              </label>
+              <label className="focus-within:ring-focus flex cursor-pointer items-center gap-3 rounded-lg border border-slate-300 bg-white p-3 transition hover:border-blue-300 hover:bg-blue-50/40">
+                <input type="radio" value="agent" className="h-4 w-4 accent-blue-600" {...register("role")} />
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
+                  <Headset className="h-4 w-4" />
+                </span>
+                <span>
+                  <span className="block text-sm font-semibold text-slate-950">Agent</span>
+                  <span className="block text-xs text-slate-500">Manage support tickets</span>
+                </span>
+              </label>
+            </div>
+            {errors.role?.message ? <p className="mt-2 text-xs font-medium text-red-600">{errors.role.message}</p> : null}
+          </div>
+          <div className="sm:col-span-2">
+            <Button type="submit" className="w-full text-white" isLoading={isLoading}>
+              <UserPlus className="h-4 w-4" />
               Register
             </Button>
           </div>

@@ -9,6 +9,11 @@ export const mongoIdParamValidator = [
   param("id").isMongoId().withMessage("Invalid ticket id"),
 ];
 
+export const attachmentParamValidator = [
+  ...mongoIdParamValidator,
+  param("index").isInt({ min: 0 }).withMessage("Invalid attachment index"),
+];
+
 export const createTicketValidator = [
   body("title")
     .trim()
@@ -87,7 +92,7 @@ export const ticketQueryValidator = [
   query("category").optional().isIn(Object.values(TICKET_CATEGORIES)).withMessage("Category is invalid"),
   query("assignedAgent").optional().isMongoId().withMessage("assignedAgent must be a valid user id"),
   query("createdBy").optional().isMongoId().withMessage("createdBy must be a valid user id"),
-  query("sort").optional().isIn(["newest", "oldest", "priority", "status"]).withMessage("Sort is invalid"),
+  query("sort").optional().isIn(["newest", "oldest", "priority", "status", "lastActivity"]).withMessage("Sort is invalid"),
   query("search").optional().trim().isLength({ max: 120 }).withMessage("Search cannot exceed 120 characters"),
 ];
 

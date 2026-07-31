@@ -1,3 +1,4 @@
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import Button from "../../../components/common/Button/Button.jsx";
 
 const Pagination = ({ pagination = {}, onPageChange }) => {
@@ -10,7 +11,10 @@ const Pagination = ({ pagination = {}, onPageChange }) => {
     <div className="flex flex-col items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 sm:flex-row">
       <p className="text-sm text-slate-600">Page {current} of {total}</p>
       <div className="flex flex-wrap items-center justify-center gap-2">
-        <Button variant="secondary" disabled={!pagination.previousPage} onClick={() => onPageChange(pagination.previousPage)}>Previous</Button>
+        <Button variant="secondary" disabled={!pagination.previousPage} onClick={() => onPageChange(pagination.previousPage)}>
+          <ArrowLeft className="h-4 w-4" />
+          Previous
+        </Button>
         {pages.map((page) => (
           <button
             key={page}
@@ -20,7 +24,10 @@ const Pagination = ({ pagination = {}, onPageChange }) => {
             {page}
           </button>
         ))}
-        <Button variant="secondary" disabled={!pagination.nextPage} onClick={() => onPageChange(pagination.nextPage)}>Next</Button>
+        <Button variant="secondary" disabled={!pagination.nextPage} onClick={() => onPageChange(pagination.nextPage)}>
+          Next
+          <ArrowRight className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );

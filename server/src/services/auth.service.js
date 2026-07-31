@@ -1,24 +1,56 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.model.js";
 import ApiError from "../utils/ApiError.js";
-import { COOKIE_NAMES, USER_ROLES } from "../utils/constants.js";
+import {
+  COOKIE_NAMES,
+  DEFAULT_ACCESS_TOKEN_EXPIRY,
+  DEFAULT_REFRESH_TOKEN_EXPIRY,
+  USER_ROLES,
+} from "../utils/constants.js";
 
-const cookieOptions = () => ({
+const expiryToMilliseconds = (value = "") => {
+  const match = String(value).trim().match(/^(\d+)\s*([smhd])$/i);
+  if (!match) return undefined;
+
+  const amount = Number(match[1]);
+  const unit = match[2].toLowerCase();
+  const multipliers = {
+    s: 1000,
+    m: 60 * 1000,
+    h: 60 * 60 * 1000,
+    d: 24 * 60 * 60 * 1000,
+  };
+
+  return amount * multipliers[unit];
+};
+
+const baseCookieOptions = () => ({
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
+  secure: process.env.COOKIE_SECURE
+    ? process.env.COOKIE_SECURE === "true"
+    : process.env.NODE_ENV === "production",
   sameSite: "strict",
+  path: "/",
+});
+
+const cookieOptions = (maxAge) => ({
+  ...baseCookieOptions(),
+  ...(maxAge ? { maxAge } : {}),
 });
 
 const sanitizeUser = (user) => user.toJSON();
 
 const attachAuthCookies = (res, accessToken, refreshToken) => {
-  res.cookie(COOKIE_NAMES.ACCESS_TOKEN, accessToken, cookieOptions());
-  res.cookie(COOKIE_NAMES.REFRESH_TOKEN, refreshToken, cookieOptions());
+  const accessMaxAge = expiryToMilliseconds(process.env.ACCESS_TOKEN_EXPIRY || DEFAULT_ACCESS_TOKEN_EXPIRY);
+  const refreshMaxAge = expiryToMilliseconds(process.env.REFRESH_TOKEN_EXPIRY || DEFAULT_REFRESH_TOKEN_EXPIRY);
+
+  res.cookie(COOKIE_NAMES.ACCESS_TOKEN, accessToken, cookieOptions(accessMaxAge));
+  res.cookie(COOKIE_NAMES.REFRESH_TOKEN, refreshToken, cookieOptions(refreshMaxAge));
 };
 
 const clearAuthCookies = (res) => {
-  res.clearCookie(COOKIE_NAMES.ACCESS_TOKEN, cookieOptions());
-  res.clearCookie(COOKIE_NAMES.REFRESH_TOKEN, cookieOptions());
+  res.clearCookie(COOKIE_NAMES.ACCESS_TOKEN, baseCookieOptions());
+  res.clearCookie(COOKIE_NAMES.REFRESH_TOKEN, baseCookieOptions());
 };
 
 const issueTokenPair = async (user) => {
@@ -31,7 +63,7 @@ const issueTokenPair = async (user) => {
   return { accessToken, refreshToken };
 };
 
-export const registerUser = async ({ fullName, email, password, phone }) => {
+export const registerUser = async ({ fullName, email, password, phone, role = USER_ROLES.CUSTOMER }) => {
   const normalizedEmail = email.toLowerCase();
   const existingUser = await User.findOne({ email: normalizedEmail });
 
@@ -44,7 +76,7 @@ export const registerUser = async ({ fullName, email, password, phone }) => {
     email: normalizedEmail,
     password,
     phone,
-    role: USER_ROLES.CUSTOMER,
+    role,
   });
 
   return sanitizeUser(user);

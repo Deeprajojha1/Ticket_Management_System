@@ -17,7 +17,7 @@ export const uploadBufferToCloudinary = (file, folder = "supportdesk-ai/tickets"
     const stream = cloudinary.uploader.upload_stream(
       {
         folder,
-        resource_type: "auto",
+        resource_type: file.mimetype === "application/pdf" ? "raw" : "image",
         use_filename: true,
         unique_filename: true,
       },
@@ -30,6 +30,7 @@ export const uploadBufferToCloudinary = (file, folder = "supportdesk-ai/tickets"
         resolve({
           url: result.secure_url,
           public_id: result.public_id,
+          resourceType: result.resource_type,
           originalName: file.originalname,
           mimeType: file.mimetype,
           fileType: file.mimetype,

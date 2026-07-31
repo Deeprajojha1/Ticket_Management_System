@@ -10,7 +10,7 @@ const ConversationSidebar = ({ activeConversationId, conversations = [], onDelet
   );
 
   return (
-    <aside className="hidden w-80 shrink-0 border-r border-slate-200 bg-slate-50 p-4 lg:block">
+    <aside className="hidden min-h-0 w-80 shrink-0 flex-col border-r border-slate-200 bg-slate-50 p-4 lg:flex">
       <div className="relative">
         <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
         <input
@@ -20,7 +20,7 @@ const ConversationSidebar = ({ activeConversationId, conversations = [], onDelet
           className="focus-ring min-h-10 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-sm outline-none"
         />
       </div>
-      <div className="mt-4 space-y-2 overflow-y-auto">
+      <div className="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto">
         {filtered.map((conversation) => (
           <ConversationCard
             key={conversation._id}

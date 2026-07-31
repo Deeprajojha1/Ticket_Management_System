@@ -8,6 +8,13 @@
     sans-serif;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -15,7 +22,6 @@
 body {
   margin: 0;
   min-width: 320px;
-  min-height: 100vh;
 }
 
 button,
@@ -23,6 +29,16 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) {
+  cursor: pointer;
+}
+
+button:disabled,
+[role="button"][aria-disabled="true"] {
+  cursor: not-allowed;
 }
 
 a {

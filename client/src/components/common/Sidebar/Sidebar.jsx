@@ -1,8 +1,8 @@
 import { NavLink } from "../../../lib/router.jsx";
 
-const Sidebar = ({ items = [] }) => (
-  <aside className="hidden w-64 border-r border-slate-200 bg-white lg:block">
-    <div className="sticky top-0 space-y-1 p-4">
+const Sidebar = ({ footer, items = [] }) => (
+  <aside className="hidden h-full w-64 shrink-0 flex-col border-r border-slate-200 bg-white lg:flex">
+    <div className="flex-1 space-y-1 overflow-y-auto p-4">
       {items.map(({ icon: Icon, label, to }) => (
         <NavLink
           key={to}
@@ -18,6 +18,7 @@ const Sidebar = ({ items = [] }) => (
         </NavLink>
       ))}
     </div>
+    {footer ? <div className="border-t border-slate-200 p-4">{footer}</div> : null}
   </aside>
 );
 

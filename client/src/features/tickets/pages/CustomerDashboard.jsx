@@ -1,6 +1,6 @@
 import { Link } from "../../../lib/router.jsx";
 import { motion } from "framer-motion";
-import { AlertTriangle, CheckCircle2, Clock3, ListChecks, Plus, Ticket } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, Clock3, ListChecks, Plus, RefreshCw, Ticket } from "lucide-react";
 import Button from "../../../components/common/Button/Button.jsx";
 import Card from "../../../components/common/Card/Card.jsx";
 import { useAuth } from "../../../hooks/useAuth.js";
@@ -52,7 +52,10 @@ const CustomerDashboard = () => {
       <section>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-slate-950">Recent Tickets</h2>
-          <Link to="/customer/tickets" className="text-sm font-semibold text-blue-700 hover:text-blue-800">View all</Link>
+          <Link to="/customer/tickets" className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 hover:text-blue-800">
+            View all
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
         </div>
         {isFetching ? <TicketSkeleton rows={3} /> : null}
         {!isFetching && recentTickets.length ? (
@@ -68,7 +71,10 @@ const CustomerDashboard = () => {
           />
         ) : null}
         {!isFetching && data?.success === false ? (
-          <Button variant="secondary" onClick={refetch}>Retry</Button>
+          <Button variant="secondary" onClick={refetch}>
+            <RefreshCw className="h-4 w-4" />
+            Retry
+          </Button>
         ) : null}
       </section>
     </motion.div>

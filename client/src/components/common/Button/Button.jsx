@@ -13,6 +13,7 @@ const Button = ({
   className = "",
   disabled = false,
   isLoading = false,
+  style,
   tabIndex,
   type = "button",
   variant = "primary",
@@ -20,6 +21,7 @@ const Button = ({
 }) => {
   const isButton = Component === "button";
   const isDisabled = disabled || isLoading;
+  const forcedStyle = ["primary", "danger"].includes(variant) ? { ...style, color: "#ffffff" } : style;
   const buttonProps = isButton
     ? {
         type,
@@ -33,6 +35,7 @@ const Button = ({
   return (
     <Component
       className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${isDisabled && !isButton ? "pointer-events-none cursor-not-allowed opacity-60" : ""} ${variants[variant]} ${className}`}
+      style={forcedStyle}
     {...buttonProps}
     {...props}
   >

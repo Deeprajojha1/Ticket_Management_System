@@ -25,6 +25,11 @@ const attachmentSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    resourceType: {
+      type: String,
+      enum: ["image", "raw", "video", "auto"],
+      default: "image",
+    },
     originalName: {
       type: String,
       required: true,

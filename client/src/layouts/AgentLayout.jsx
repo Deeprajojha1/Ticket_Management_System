@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "../lib/router.jsx";
-import { BarChart3, Command, Inbox, LayoutDashboard, LifeBuoy, LogOut, Menu, Moon, Search, Sun, User, X } from "lucide-react";
+import { BarChart3, Command, Inbox, LayoutDashboard, LifeBuoy, LogOut, Menu, Search, User, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import Button from "../components/common/Button/Button.jsx";
@@ -23,7 +23,6 @@ const AgentLayout = () => {
   const location = useLocation();
   const { user } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isDark, setIsDark] = useState(false);
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [logout, { isLoading }] = useLogoutMutation();
 
@@ -94,7 +93,7 @@ const AgentLayout = () => {
   );
 
   return (
-    <div className={`${isDark ? "dark" : ""} min-h-screen bg-slate-50`}>
+    <div className="h-screen overflow-hidden bg-slate-50">
       <div className="fixed inset-y-0 left-0 z-40 hidden lg:block">{sidebar}</div>
       {isSidebarOpen ? (
         <div className="fixed inset-0 z-50 bg-slate-950/40 lg:hidden">
@@ -102,8 +101,8 @@ const AgentLayout = () => {
         </div>
       ) : null}
 
-      <div className="lg:pl-72">
-        <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
+      <div className="flex h-full min-h-0 flex-col lg:pl-72">
+        <header className="sticky top-0 z-30 shrink-0 border-b border-slate-200 bg-white/95 backdrop-blur">
           <div className="flex min-h-16 items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
             <div className="flex min-w-0 items-center gap-3">
               <button className="focus-ring rounded-md p-2 text-slate-600 lg:hidden" onClick={() => setIsSidebarOpen(true)} aria-label="Open menu">
@@ -123,9 +122,6 @@ const AgentLayout = () => {
                 Search tickets
                 <span className="ml-8 rounded border border-slate-200 px-1.5 py-0.5 text-xs">Ctrl K</span>
               </button>
-              <button className="focus-ring rounded-lg p-2.5 text-slate-600 hover:bg-slate-100" onClick={() => setIsDark((value) => !value)} aria-label="Toggle theme">
-                {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              </button>
               <ConnectionStatus />
               <NotificationBell />
               <div className="hidden items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 sm:flex">
@@ -141,7 +137,7 @@ const AgentLayout = () => {
           </div>
         </header>
 
-        <main className="p-4 sm:p-6 lg:p-8">
+        <main className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <Outlet />
         </main>
       </div>
@@ -154,15 +150,16 @@ const AgentLayout = () => {
               <input autoFocus className="w-full bg-transparent text-sm outline-none" placeholder="Go to dashboard, tickets, assigned, analytics..." />
             </div>
             <div className="mt-2 grid gap-1">
-              {navItems.map((item) => (
+              {navItems.map(({ icon: Icon, ...item }) => (
                 <button
                   key={item.to}
-                  className="focus-ring rounded-md px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-100"
+                  className="focus-ring inline-flex items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-100"
                   onClick={() => {
                     navigate(item.to);
                     setIsCommandOpen(false);
                   }}
                 >
+                  <Icon className="h-4 w-4" />
                   {item.label}
                 </button>
               ))}

@@ -1,4 +1,4 @@
-import { UserPlus } from "lucide-react";
+import { ExternalLink, UserPlus } from "lucide-react";
 import Button from "../../../components/common/Button/Button.jsx";
 import PriorityBadge from "../../tickets/components/PriorityBadge.jsx";
 import TicketStatusBadge from "../../tickets/components/TicketStatusBadge.jsx";
@@ -29,7 +29,10 @@ const TicketRow = ({ ticket, onAssign, onOpen }) => (
           </Button>
         ) : null}
         <button className="focus-ring rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50" onClick={() => onOpen(ticket)}>
+          <span className="inline-flex items-center gap-1.5">
+            <ExternalLink className="h-3.5 w-3.5" />
           Open
+          </span>
         </button>
       </div>
     </td>
@@ -57,8 +60,16 @@ export const AgentTicketCard = ({ ticket, onAssign, onOpen }) => (
     <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
       <p className="text-xs text-slate-500">Assigned: {ticket.assignedAgent?.fullName || "Unassigned"}</p>
       <div className="flex gap-2">
-        {!ticket.assignedAgent?._id ? <Button variant="secondary" onClick={() => onAssign(ticket)}>Assign</Button> : null}
-        <button className="focus-ring rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700" onClick={() => onOpen(ticket)}>Open</button>
+        {!ticket.assignedAgent?._id ? (
+          <Button variant="secondary" onClick={() => onAssign(ticket)}>
+            <UserPlus className="h-4 w-4" />
+            Assign
+          </Button>
+        ) : null}
+        <button className="focus-ring inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700" onClick={() => onOpen(ticket)}>
+          <ExternalLink className="h-4 w-4" />
+          Open
+        </button>
       </div>
     </div>
   </div>

@@ -1,4 +1,6 @@
 import { body } from "express-validator";
+import { USER_ROLES } from "../utils/constants.js";
+
 const passwordRule = body("password")
   .isString()
   .withMessage("Password is required")
@@ -27,6 +29,10 @@ export const registerValidator = [
     .trim()
     .isMobilePhone("any")
     .withMessage("Phone must be a valid mobile number"),
+  body("role")
+    .optional()
+    .isIn(Object.values(USER_ROLES))
+    .withMessage("Role must be either customer or agent"),
 ];
 
 export const loginValidator = [

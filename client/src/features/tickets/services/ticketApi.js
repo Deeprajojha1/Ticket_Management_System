@@ -1,5 +1,6 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import axiosInstance from "../../../utils/axiosInstance.js";
+import { dashboardApi } from "../../agent/services/dashboardApi.js";
 
 const axiosBaseQuery =
   () =>
@@ -63,6 +64,14 @@ export const ticketApi = createApi({
         onUploadProgress,
       }),
       invalidatesTags: ["Tickets"],
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          dispatch(dashboardApi.util.invalidateTags(["AgentTickets", "AgentOverview", "AgentActivity", "Notifications"]));
+        } catch {
+          // RTK Query will expose the mutation error to the caller.
+        }
+      },
     }),
     updateTicket: builder.mutation({
       query: ({ ticketId, payload, onUploadProgress }) => ({
@@ -73,6 +82,14 @@ export const ticketApi = createApi({
         onUploadProgress,
       }),
       invalidatesTags: (_result, _error, { ticketId }) => ["Tickets", { type: "Ticket", id: ticketId }],
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          dispatch(dashboardApi.util.invalidateTags(["AgentTickets", "AgentOverview", "AgentActivity"]));
+        } catch {
+          // RTK Query will expose the mutation error to the caller.
+        }
+      },
     }),
     deleteTicket: builder.mutation({
       query: (ticketId) => ({
@@ -80,12 +97,20 @@ export const ticketApi = createApi({
         method: "DELETE",
       }),
       invalidatesTags: ["Tickets"],
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          dispatch(dashboardApi.util.invalidateTags(["AgentTickets", "AgentOverview", "AgentActivity"]));
+        } catch {
+          // RTK Query will expose the mutation error to the caller.
+        }
+      },
     }),
     getComments: builder.query({
-      query: ({ ticketId, page = 1, limit = 50 }) => ({
+      query: ({ ticketId, page = 1, limit = 50, sort = "oldest" }) => ({
         url: `/tickets/${ticketId}/comments`,
         method: "GET",
-        params: { page, limit },
+        params: { page, limit, sort },
       }),
       providesTags: (_result, _error, { ticketId }) => [{ type: "Comments", id: ticketId }],
     }),
@@ -97,11 +122,28 @@ export const ticketApi = createApi({
         headers: { "Content-Type": "multipart/form-data" },
         onUploadProgress,
       }),
-      invalidatesTags: (_result, _error, { ticketId }) => [
-        { type: "Comments", id: ticketId },
-        { type: "Ticket", id: ticketId },
-        "Tickets",
-      ],
+      invalidatesTags: (_result, _error, { ticketId }) => [{ type: "Ticket", id: ticketId }, "Tickets"],
+      async onQueryStarted({ ticketId }, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          const comment = data?.data?.comment;
+          if (comment) {
+            dispatch(
+              ticketApi.util.updateQueryData("getComments", { ticketId, page: 1, limit: 50, sort: "oldest" }, (draft) => {
+                const comments = draft?.data?.comments;
+                if (!Array.isArray(comments) || comments.some((item) => item._id === comment._id)) return;
+                comments.push(comment);
+                if (draft.data?.pagination?.totalDocuments !== undefined) {
+                  draft.data.pagination.totalDocuments += 1;
+                }
+              }),
+            );
+          }
+          dispatch(dashboardApi.util.invalidateTags(["AgentTickets", "AgentOverview", "AgentActivity", "Notifications"]));
+        } catch {
+          // RTK Query will expose the mutation error to the caller.
+        }
+      },
     }),
   }),
 });

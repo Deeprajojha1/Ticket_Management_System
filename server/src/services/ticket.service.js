@@ -1,8 +1,9 @@
+import axios from "axios";
 import mongoose from "mongoose";
 import Ticket from "../models/Ticket.model.js";
 import APIFeatures from "../utils/APIFeatures.js";
 import ApiError from "../utils/ApiError.js";
-import { uploadBufferToCloudinary } from "../utils/cloudinary.js";
+import cloudinary, { uploadBufferToCloudinary } from "../utils/cloudinary.js";
 import { TICKET_STATUSES, USER_ROLES } from "../utils/constants.js";
 import { getIO } from "../socket/socket.js";
 import { SOCKET_EVENTS } from "../socket/socketConstants.js";
@@ -30,6 +31,18 @@ const normalizeTags = (tags) => {
   return [...new Set(tags.map((tag) => tag.trim().toLowerCase()).filter(Boolean))].slice(0, 10);
 };
 
+const toEntityId = (value) => {
+  if (!value) {
+    return null;
+  }
+
+  if (value._id) {
+    return value._id.toString();
+  }
+
+  return value.toString();
+};
+
 const emitToAgents = (event, payload) => {
   getIO()?.to(getAgentRoom()).emit(event, payload);
 };
@@ -40,6 +53,68 @@ const emitToTicket = (ticketId, event, payload) => {
 
 const emitToUser = (userId, event, payload) => {
   getIO()?.to(getUserRoom(userId)).emit(event, payload);
+};
+
+const uniqueValues = (values) => [...new Set(values.filter(Boolean))];
+
+const getAttachmentResourceTypes = (attachment) => {
+  if (attachment.resourceType) {
+    return uniqueValues([attachment.resourceType, "raw", "image"]);
+  }
+
+  if (attachment.mimeType === "application/pdf") {
+    return ["raw", "image"];
+  }
+
+  if (attachment.mimeType?.startsWith("image/")) {
+    return ["image", "raw"];
+  }
+
+  return ["raw", "image"];
+};
+
+const getAttachmentFormat = (attachment) => {
+  const fromName = attachment.originalName?.split(".").pop()?.toLowerCase();
+  const fromUrl = attachment.url?.split("?")[0]?.split(".").pop()?.toLowerCase();
+  const format = fromName || fromUrl;
+
+  return format && format.length <= 10 ? format : undefined;
+};
+
+const buildAttachmentDeliveryUrls = (attachment) => {
+  const candidateUrls = [attachment.url];
+  const format = getAttachmentFormat(attachment);
+
+  if (attachment.public_id) {
+    getAttachmentResourceTypes(attachment).forEach((resourceType) => {
+      candidateUrls.push(
+        cloudinary.url(attachment.public_id, {
+          resource_type: resourceType,
+          secure: true,
+        }),
+      );
+      candidateUrls.push(
+        cloudinary.url(attachment.public_id, {
+          resource_type: resourceType,
+          secure: true,
+          sign_url: true,
+        }),
+      );
+
+      if (cloudinary.utils?.private_download_url && format) {
+        candidateUrls.push(
+          cloudinary.utils.private_download_url(attachment.public_id, format, {
+            resource_type: resourceType,
+            type: "upload",
+            attachment: false,
+            secure: true,
+          }),
+        );
+      }
+    });
+  }
+
+  return uniqueValues(candidateUrls);
 };
 
 export const uploadAttachments = async (files = [], userId) => {
@@ -66,7 +141,7 @@ export const assertTicketAccess = (ticket, user) => {
     return;
   }
 
-  if (ticket.createdBy.toString() !== user._id.toString()) {
+  if (toEntityId(ticket.createdBy) !== user._id.toString()) {
     throw new ApiError(403, "You do not have access to this ticket");
   }
 };
@@ -76,7 +151,7 @@ export const assertAgentCommentAccess = (ticket, user) => {
     return;
   }
 
-  if (!ticket.assignedAgent || ticket.assignedAgent.toString() !== user._id.toString()) {
+  if (!ticket.assignedAgent || toEntityId(ticket.assignedAgent) !== user._id.toString()) {
     throw new ApiError(403, "Agents can comment only on tickets assigned to them");
   }
 };
@@ -158,6 +233,50 @@ export const getTicketById = async ({ ticketId, user }) => {
   const ticket = await populateTicket(Ticket.findById(ticketId));
   assertTicketAccess(ticket, user);
   return ticket;
+};
+
+export const getAttachmentStorageStream = async (attachment) => {
+  if (!attachment?.url) {
+    throw new ApiError(404, "Attachment not found");
+  }
+
+  const deliveryUrls = buildAttachmentDeliveryUrls(attachment);
+  const failedStatuses = [];
+
+  for (const url of deliveryUrls) {
+    try {
+      const response = await axios.get(url, {
+        responseType: "stream",
+        timeout: 20000,
+        validateStatus: (status) => status >= 200 && status < 300,
+      });
+
+      return {
+        stream: response.data,
+        attachment,
+        contentType: response.headers["content-type"] || attachment.mimeType || "application/octet-stream",
+        contentLength: response.headers["content-length"],
+      };
+    } catch (error) {
+      failedStatuses.push(error.response?.status || error.code || "network-error");
+      // Try the next possible Cloudinary delivery URL for legacy image/raw uploads.
+    }
+  }
+
+  throw new ApiError(
+    502,
+    `Attachment file could not be loaded from storage${failedStatuses.length ? ` (${failedStatuses.join(", ")})` : ""}`,
+  );
+};
+
+export const getTicketAttachmentStream = async ({ ticketId, attachmentIndex, user }) => {
+  const ticket = await Ticket.findOne({ _id: ticketId, isDeleted: false }).select("createdBy assignedAgent attachments");
+  assertTicketAccess(ticket, user);
+
+  const index = Number(attachmentIndex);
+  const attachment = Number.isInteger(index) ? ticket.attachments[index] : null;
+
+  return getAttachmentStorageStream(attachment);
 };
 
 export const updateCustomerTicket = async ({ ticketId, payload, files, user }) => {

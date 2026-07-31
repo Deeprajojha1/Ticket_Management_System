@@ -98,6 +98,41 @@ npm install
 npm run dev
 ```
 
+## Running With Docker
+
+The root `docker-compose.yml` starts MongoDB, Redis, the Express API, and the built React frontend.
+
+Make sure `server/.env` exists before starting the stack. For local Docker over HTTP, keep:
+
+```env
+COOKIE_SECURE=false
+CLIENT_URL=http://localhost:5173
+```
+
+Start the full stack:
+
+```bash
+docker compose up --build
+```
+
+Open:
+
+- Frontend: `http://localhost:5173`
+- Backend health: `http://localhost:5000/health`
+- API docs: `http://localhost:5000/api-docs`
+
+Stop the stack:
+
+```bash
+docker compose down
+```
+
+Remove database/cache volumes:
+
+```bash
+docker compose down -v
+```
+
 ## Verification
 
 Frontend:

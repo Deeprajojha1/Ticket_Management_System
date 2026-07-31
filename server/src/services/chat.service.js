@@ -55,6 +55,8 @@ export const sendChatMessage = async ({ user, payload, files = [] }) => {
     metadata: {
       usage: aiResult.usage,
       responseTimeMs: aiResult.responseTimeMs,
+      provider: aiResult.provider,
+      model: aiResult.model,
     },
   });
 

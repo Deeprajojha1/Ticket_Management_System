@@ -6,11 +6,18 @@ import {
   deleteCustomerTicket,
   getAgentTickets,
   getMyTickets,
+  getTicketAttachmentStream,
   getTicketById,
   updateCustomerTicket,
   updateTicketPriority,
   updateTicketStatus,
 } from "../services/ticket.service.js";
+
+const safeFilename = (filename = "attachment") =>
+  filename
+    .replace(/[^\w.\-() ]/g, "_")
+    .replace(/\s+/g, " ")
+    .trim() || "attachment";
 
 export const createTicketController = asyncHandler(async (req, res) => {
   const ticket = await createTicket({ payload: req.body, files: req.files, user: req.user });
@@ -34,6 +41,38 @@ export const getTicketByIdController = asyncHandler(async (req, res) => {
   const ticket = await getTicketById({ ticketId: req.params.id, user: req.user });
 
   res.status(200).json(new ApiResponse(200, { ticket }, "Ticket fetched successfully"));
+});
+
+export const openTicketAttachmentController = asyncHandler(async (req, res) => {
+  const { stream, attachment, contentType, contentLength } = await getTicketAttachmentStream({
+    ticketId: req.params.id,
+    attachmentIndex: req.params.index,
+    user: req.user,
+  });
+
+  if (contentLength) {
+    res.setHeader("Content-Length", contentLength);
+  }
+
+  res.setHeader("Content-Type", contentType);
+  res.setHeader("Content-Disposition", `inline; filename="${safeFilename(attachment.originalName)}"`);
+  stream.pipe(res);
+});
+
+export const downloadTicketAttachmentController = asyncHandler(async (req, res) => {
+  const { stream, attachment, contentType, contentLength } = await getTicketAttachmentStream({
+    ticketId: req.params.id,
+    attachmentIndex: req.params.index,
+    user: req.user,
+  });
+
+  if (contentLength) {
+    res.setHeader("Content-Length", contentLength);
+  }
+
+  res.setHeader("Content-Type", contentType);
+  res.setHeader("Content-Disposition", `attachment; filename="${safeFilename(attachment.originalName)}"`);
+  stream.pipe(res);
 });
 
 export const updateTicketController = asyncHandler(async (req, res) => {

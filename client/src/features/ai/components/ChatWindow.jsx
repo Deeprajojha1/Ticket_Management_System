@@ -26,17 +26,91 @@ const asMessage = (role, content, extras = {}) => ({
   ...extras,
 });
 
-const exportMarkdown = (messages) => {
-  const markdown = messages.map((message) => `## ${message.role}\n\n${message.content}`).join("\n\n");
-  const url = URL.createObjectURL(new Blob([markdown], { type: "text/markdown;charset=utf-8;" }));
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "supportdesk-ai-chat.md";
-  link.click();
-  URL.revokeObjectURL(url);
+const escapeHtml = (value = "") =>
+  value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+const exportPdf = (messages) => {
+  if (!messages.length) {
+    toast.error("No messages to download");
+    return;
+  }
+
+  const rows = messages
+    .map(
+      (message) => `
+        <section class="message ${message.role}">
+          <div class="role">${escapeHtml(message.role === "assistant" ? "SupportDesk AI" : "You")}</div>
+          <div class="content">${escapeHtml(message.content).replaceAll("\n", "<br />")}</div>
+        </section>
+      `,
+    )
+    .join("");
+
+  const pdfHtml = `
+    <!doctype html>
+    <html>
+      <head>
+        <title>SupportDesk AI Chat</title>
+        <style>
+          @page { margin: 18mm; }
+          body { color: #0f172a; font-family: Arial, sans-serif; line-height: 1.5; }
+          h1 { font-size: 22px; margin: 0 0 4px; }
+          .meta { color: #64748b; font-size: 12px; margin-bottom: 24px; }
+          .message { border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 12px; padding: 12px; page-break-inside: avoid; }
+          .assistant { background: #f8fafc; }
+          .user { background: #eff6ff; }
+          .role { font-size: 12px; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; }
+          .content { font-size: 14px; white-space: normal; }
+        </style>
+      </head>
+      <body>
+        <h1>SupportDesk AI Chat</h1>
+        <div class="meta">Downloaded ${new Date().toLocaleString()}</div>
+        ${rows}
+      </body>
+    </html>
+  `;
+
+  const existingFrame = document.getElementById("supportdesk-chat-pdf-frame");
+  existingFrame?.remove();
+
+  const iframe = document.createElement("iframe");
+  iframe.id = "supportdesk-chat-pdf-frame";
+  iframe.title = "SupportDesk AI Chat PDF";
+  iframe.style.position = "fixed";
+  iframe.style.right = "0";
+  iframe.style.bottom = "0";
+  iframe.style.width = "0";
+  iframe.style.height = "0";
+  iframe.style.border = "0";
+  iframe.style.visibility = "hidden";
+
+  document.body.appendChild(iframe);
+
+  const iframeDocument = iframe.contentDocument || iframe.contentWindow?.document;
+  if (!iframeDocument || !iframe.contentWindow) {
+    iframe.remove();
+    toast.error("PDF download failed");
+    return;
+  }
+
+  iframeDocument.open();
+  iframeDocument.write(pdfHtml);
+  iframeDocument.close();
+
+  setTimeout(() => {
+    iframe.contentWindow?.focus();
+    iframe.contentWindow?.print();
+    toast.success("Choose Save as PDF in the print dialog");
+  }, 250);
 };
 
-const ChatWindow = ({ compact = false }) => {
+const ChatWindow = ({ compact = false, onClose }) => {
   const [conversationId, setConversationId] = useState(null);
   const [draft, setDraft] = useState("");
   const [localMessages, setLocalMessages] = useState([]);
@@ -104,7 +178,7 @@ const ChatWindow = ({ compact = false }) => {
   };
 
   return (
-    <section className={`flex overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm ${compact ? "h-[min(720px,calc(100vh-96px))]" : "h-[calc(100vh-140px)]"}`}>
+    <section className={`min-h-0 flex overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm ${compact ? "h-[min(640px,calc(100vh-48px))] sm:h-[min(680px,calc(100vh-64px))]" : "flex-1"}`}>
       {!compact ? (
         <ConversationSidebar
           activeConversationId={conversationId}
@@ -113,14 +187,16 @@ const ChatWindow = ({ compact = false }) => {
           onSelect={(item) => setConversationId(item._id)}
         />
       ) : null}
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <ChatHeader
+          compact={compact}
+          onClose={onClose}
           onClear={startNew}
           onCopyConversation={copyConversation}
-          onExportMarkdown={() => exportMarkdown(displayMessages)}
+          onExportPdf={() => exportPdf(displayMessages)}
           onNewChat={startNew}
         />
-        <div className="flex-1 overflow-y-auto bg-slate-50 p-4">
+        <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-4">
           {conversation.isFetching ? <ChatSkeleton /> : null}
           {!conversation.isFetching && !displayMessages.length ? <EmptyConversation onSelect={(question) => send({ message: question })} /> : null}
           <div className="space-y-5">

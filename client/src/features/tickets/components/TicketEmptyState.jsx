@@ -1,4 +1,4 @@
-import { Inbox } from "lucide-react";
+import { Inbox, PlusCircle } from "lucide-react";
 import Button from "../../../components/common/Button/Button.jsx";
 
 const TicketEmptyState = ({ action, description = "No records found.", title = "Nothing here yet" }) => (
@@ -8,7 +8,14 @@ const TicketEmptyState = ({ action, description = "No records found.", title = "
     </div>
     <h2 className="mt-4 text-lg font-semibold text-slate-950">{title}</h2>
     <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">{description}</p>
-    {action ? <div className="mt-5"><Button>{action}</Button></div> : null}
+    {action ? (
+      <div className="mt-5">
+        <Button>
+          <PlusCircle className="h-4 w-4" />
+          {action}
+        </Button>
+      </div>
+    ) : null}
   </div>
 );
 

@@ -3,9 +3,11 @@ import {
   assignTicketController,
   createTicketController,
   deleteTicketController,
+  downloadTicketAttachmentController,
   getAgentTicketsController,
   getMyTicketsController,
   getTicketByIdController,
+  openTicketAttachmentController,
   updateTicketController,
   updateTicketPriorityController,
   updateTicketStatusController,
@@ -17,6 +19,7 @@ import validate from "../middlewares/validate.middleware.js";
 import { USER_ROLES } from "../utils/constants.js";
 import {
   createTicketValidator,
+  attachmentParamValidator,
   mongoIdParamValidator,
   ticketQueryValidator,
   updatePriorityValidator,
@@ -38,6 +41,14 @@ customerRouter
 customerRouter
   .route("/my")
   .get(ticketQueryValidator, validate, getMyTicketsController);
+
+customerRouter
+  .route("/:id/attachments/:index/open")
+  .get(attachmentParamValidator, validate, openTicketAttachmentController);
+
+customerRouter
+  .route("/:id/attachments/:index/download")
+  .get(attachmentParamValidator, validate, downloadTicketAttachmentController);
 
 customerRouter
   .route("/:id")

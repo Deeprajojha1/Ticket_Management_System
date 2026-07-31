@@ -2,8 +2,8 @@ import TicketRow, { AgentTicketCard } from "./TicketRow.jsx";
 
 const TicketTable = ({ tickets = [], onAssign, onOpen }) => (
   <>
-    <div className="hidden overflow-hidden rounded-lg border border-slate-200 bg-white xl:block">
-      <table className="min-w-full divide-y divide-slate-200">
+    <div className="hidden overflow-x-auto rounded-lg border border-slate-200 bg-white 2xl:block">
+      <table className="min-w-[1180px] divide-y divide-slate-200">
         <thead className="sticky top-16 bg-slate-50">
           <tr>
             {["Ticket", "Customer", "Title", "Category", "Priority", "Status", "Assigned Agent", "Created", "Last Activity", "Actions"].map((head) => (
@@ -16,7 +16,7 @@ const TicketTable = ({ tickets = [], onAssign, onOpen }) => (
         </tbody>
       </table>
     </div>
-    <div className="grid gap-3 xl:hidden">
+    <div className="grid gap-3 2xl:hidden">
       {tickets.map((ticket) => <AgentTicketCard key={ticket._id} ticket={ticket} onAssign={onAssign} onOpen={onOpen} />)}
     </div>
   </>

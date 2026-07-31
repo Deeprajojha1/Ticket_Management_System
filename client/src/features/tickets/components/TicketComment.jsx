@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import AttachmentPreview from "./AttachmentPreview.jsx";
 import { formatDate, getInitials } from "../utils.js";
 
-const TicketComment = ({ comment, currentUserId }) => {
+const TicketComment = ({ comment, currentUserId, ticketId }) => {
   const isMine = comment.user?._id === currentUserId || comment.user?.id === currentUserId;
   const authorName = comment.user?.fullName || "Support user";
 
@@ -23,8 +23,15 @@ const TicketComment = ({ comment, currentUserId }) => {
         <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">{comment.message}</p>
         {comment.attachments?.length ? (
           <div className="mt-3 grid gap-2">
-            {comment.attachments.map((attachment) => (
-              <AttachmentPreview key={attachment.public_id || attachment.url} attachment={attachment} />
+            {comment.attachments.map((attachment, index) => (
+              <AttachmentPreview
+                key={attachment.public_id || attachment.url}
+                attachment={attachment}
+                attachmentIndex={index}
+                commentId={comment._id}
+                ticketId={ticketId}
+                variant={attachment.mimeType?.startsWith("image/") ? "chat" : "card"}
+              />
             ))}
           </div>
         ) : null}

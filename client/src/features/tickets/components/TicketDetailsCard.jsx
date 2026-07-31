@@ -39,9 +39,14 @@ const TicketDetailsCard = ({ ticket }) => (
     <div className="mt-6">
       <h2 className="text-sm font-semibold text-slate-950">Attachments</h2>
       {ticket.attachments?.length ? (
-        <div className="mt-3 grid gap-2 md:grid-cols-2">
-          {ticket.attachments.map((attachment) => (
-            <AttachmentPreview key={attachment.public_id || attachment.url} attachment={attachment} />
+        <div className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] gap-3">
+          {ticket.attachments.map((attachment, index) => (
+            <AttachmentPreview
+              key={attachment.public_id || attachment.url}
+              attachment={attachment}
+              ticketId={ticket._id}
+              attachmentIndex={index}
+            />
           ))}
         </div>
       ) : (

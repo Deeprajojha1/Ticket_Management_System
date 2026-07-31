@@ -2,20 +2,32 @@ import Comment from "../models/Comment.model.js";
 import Ticket from "../models/Ticket.model.js";
 import APIFeatures from "../utils/APIFeatures.js";
 import ApiError from "../utils/ApiError.js";
-import { uploadAttachments, assertAgentCommentAccess, assertTicketAccess } from "./ticket.service.js";
+import {
+  uploadAttachments,
+  assertAgentCommentAccess,
+  assertTicketAccess,
+  getAttachmentStorageStream,
+} from "./ticket.service.js";
 import { getIO } from "../socket/socket.js";
 import { SOCKET_EVENTS } from "../socket/socketConstants.js";
 import { getTicketRoom, getUserRoom } from "../socket/socketRooms.js";
 import { createAuditLog } from "./audit.service.js";
 import { createNotifications } from "./notification.service.js";
+import { TICKET_STATUSES } from "../utils/constants.js";
 
 const populateComment = (query) =>
   query.populate("user", "fullName email role avatar");
+
+const lockedConversationStatuses = new Set([TICKET_STATUSES.RESOLVED, TICKET_STATUSES.CLOSED]);
 
 export const createComment = async ({ ticketId, payload, files, user }) => {
   const ticket = await Ticket.findOne({ _id: ticketId, isDeleted: false });
   assertTicketAccess(ticket, user);
   assertAgentCommentAccess(ticket, user);
+
+  if (lockedConversationStatuses.has(ticket.status)) {
+    throw new ApiError(403, "This ticket is resolved or closed. Conversation is locked.");
+  }
 
   const attachments = await uploadAttachments(files, user._id);
   const comment = await Comment.create({
@@ -65,11 +77,9 @@ export const createComment = async ({ ticketId, payload, files, user }) => {
     },
   ]);
 
-  getIO()?.to(getTicketRoom(ticket._id)).emit(SOCKET_EVENTS.COMMENT_ADDED, socketPayload);
-  getIO()?.to(getUserRoom(ticket.createdBy)).emit(SOCKET_EVENTS.COMMENT_ADDED, socketPayload);
-  if (ticket.assignedAgent) {
-    getIO()?.to(getUserRoom(ticket.assignedAgent)).emit(SOCKET_EVENTS.COMMENT_ADDED, socketPayload);
-  }
+  const rooms = new Set([getTicketRoom(ticket._id), getUserRoom(ticket.createdBy)]);
+  if (ticket.assignedAgent) rooms.add(getUserRoom(ticket.assignedAgent));
+  getIO()?.to([...rooms]).emit(SOCKET_EVENTS.COMMENT_ADDED, socketPayload);
 
   return populatedComment;
 };
@@ -85,4 +95,19 @@ export const getTicketComments = async ({ ticketId, queryString, user }) => {
   const comments = await populateComment(features.query);
 
   return { comments, pagination: features.pagination };
+};
+
+export const getCommentAttachmentStream = async ({ ticketId, commentId, attachmentIndex, user }) => {
+  const ticket = await Ticket.findOne({ _id: ticketId, isDeleted: false }).select("createdBy assignedAgent");
+  assertTicketAccess(ticket, user);
+
+  const comment = await Comment.findOne({ _id: commentId, ticket: ticket._id });
+  if (!comment) {
+    throw new ApiError(404, "Comment not found");
+  }
+
+  const index = Number(attachmentIndex);
+  const attachment = Number.isInteger(index) ? comment.attachments[index] : null;
+
+  return getAttachmentStorageStream(attachment);
 };
