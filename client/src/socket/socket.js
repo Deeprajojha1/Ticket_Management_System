@@ -2,13 +2,21 @@ import { io } from "socket.io-client";
 
 let socketInstance = null;
 
+const toSocketOrigin = (value) => {
+  try {
+    return new URL(value).origin;
+  } catch (_error) {
+    return value;
+  }
+};
+
 const getSocketUrl = () => {
   if (import.meta.env.VITE_SOCKET_URL) {
-    return import.meta.env.VITE_SOCKET_URL;
+    return toSocketOrigin(import.meta.env.VITE_SOCKET_URL);
   }
 
   if (import.meta.env.VITE_API_BASE_URL) {
-    return import.meta.env.VITE_API_BASE_URL.replace(/\/api\/v\d+\/?$/, "");
+    return toSocketOrigin(import.meta.env.VITE_API_BASE_URL);
   }
 
   return "http://localhost:5000";
