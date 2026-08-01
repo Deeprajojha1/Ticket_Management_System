@@ -128,12 +128,14 @@ const SocketProvider = ({ children }) => {
         const response = await axiosInstance.get("/auth/socket-token");
         if (!isMounted) return;
 
+        socket.io.opts.reconnection = true;
         socket.auth = { token: response.data?.data?.token };
         socket.connect();
       } catch (error) {
         if (!isMounted) return;
 
         console.error("Socket token request failed:", error.response?.data?.message || error.message);
+        socket.io.opts.reconnection = true;
         socket.auth = {};
         socket.connect();
       }

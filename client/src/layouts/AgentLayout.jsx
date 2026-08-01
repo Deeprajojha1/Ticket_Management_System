@@ -12,6 +12,8 @@ import { ticketApi } from "../features/tickets/services/ticketApi.js";
 import { aiApi } from "../features/ai/services/aiApi.js";
 import { clearCredentials } from "../features/auth/authSlice.js";
 import { useAuth } from "../hooks/useAuth.js";
+import { disconnectSocket } from "../socket/socket.js";
+import { setAuthRefreshEnabled } from "../utils/axiosInstance.js";
 
 const navItems = [
   { label: "Dashboard", to: "/agent/dashboard", icon: LayoutDashboard },
@@ -46,18 +48,21 @@ const AgentLayout = () => {
   }, []);
 
   const handleLogout = async () => {
-    dispatch(clearCredentials());
-    dispatch(authApi.util.resetApiState());
-    dispatch(ticketApi.util.resetApiState());
-    dispatch(dashboardApi.util.resetApiState());
-    dispatch(aiApi.util.resetApiState());
-    navigate("/login", { replace: true });
-
     try {
+      setAuthRefreshEnabled(false);
       await logout().unwrap();
       toast.success("Logged out successfully");
     } catch (error) {
       toast.error(error?.data?.message || "Logged out locally");
+    } finally {
+      disconnectSocket();
+      dispatch(clearCredentials());
+      dispatch(authApi.util.resetApiState());
+      dispatch(ticketApi.util.resetApiState());
+      dispatch(dashboardApi.util.resetApiState());
+      dispatch(aiApi.util.resetApiState());
+      navigate("/login", { replace: true });
+      window.queueMicrotask(() => setAuthRefreshEnabled(true));
     }
   };
 

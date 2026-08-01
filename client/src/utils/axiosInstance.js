@@ -9,6 +9,12 @@ const axiosInstance = axios.create({
 });
 
 let refreshRequest = null;
+let authRefreshEnabled = true;
+
+export const setAuthRefreshEnabled = (enabled) => {
+  authRefreshEnabled = enabled;
+  if (!enabled) refreshRequest = null;
+};
 
 axiosInstance.interceptors.response.use(
   (response) => response,
@@ -17,7 +23,15 @@ axiosInstance.interceptors.response.use(
     const status = error.response?.status;
     const url = originalRequest?.url || "";
 
-    if (!originalRequest || status !== 401 || originalRequest._retry || url.includes("/auth/refresh-token") || url.includes("/auth/login")) {
+    if (
+      !authRefreshEnabled ||
+      !originalRequest ||
+      status !== 401 ||
+      originalRequest._retry ||
+      url.includes("/auth/refresh-token") ||
+      url.includes("/auth/login") ||
+      url.includes("/auth/logout")
+    ) {
       return Promise.reject(error);
     }
 

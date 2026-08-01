@@ -13,6 +13,8 @@ import Button from "../components/common/Button/Button.jsx";
 import ConnectionStatus from "../components/ConnectionStatus.jsx";
 import AIChatWidget from "../features/ai/components/AIChatWidget.jsx";
 import { useAuth } from "../hooks/useAuth.js";
+import { disconnectSocket } from "../socket/socket.js";
+import { setAuthRefreshEnabled } from "../utils/axiosInstance.js";
 
 const CustomerLayout = () => {
   const dispatch = useDispatch();
@@ -28,18 +30,21 @@ const CustomerLayout = () => {
   ];
 
   const handleLogout = async () => {
-    dispatch(clearCredentials());
-    dispatch(authApi.util.resetApiState());
-    dispatch(ticketApi.util.resetApiState());
-    dispatch(dashboardApi.util.resetApiState());
-    dispatch(aiApi.util.resetApiState());
-    navigate("/login", { replace: true });
-
     try {
+      setAuthRefreshEnabled(false);
       await logout().unwrap();
       toast.success("Logged out successfully");
     } catch (error) {
       toast.error(error?.data?.message || "Logged out locally");
+    } finally {
+      disconnectSocket();
+      dispatch(clearCredentials());
+      dispatch(authApi.util.resetApiState());
+      dispatch(ticketApi.util.resetApiState());
+      dispatch(dashboardApi.util.resetApiState());
+      dispatch(aiApi.util.resetApiState());
+      navigate("/login", { replace: true });
+      window.queueMicrotask(() => setAuthRefreshEnabled(true));
     }
   };
 

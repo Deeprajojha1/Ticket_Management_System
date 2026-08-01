@@ -23,7 +23,10 @@ const getSocketUrl = () => {
 };
 
 export const createSocket = () => {
-  if (socketInstance) return socketInstance;
+  if (socketInstance) {
+    socketInstance.io.opts.reconnection = true;
+    return socketInstance;
+  }
 
   socketInstance = io(getSocketUrl(), {
     autoConnect: false,
@@ -42,6 +45,8 @@ export const getSocket = () => socketInstance || createSocket();
 
 export const disconnectSocket = () => {
   if (socketInstance) {
+    socketInstance.io.opts.reconnection = false;
+    socketInstance.auth = {};
     socketInstance.disconnect();
   }
 };
