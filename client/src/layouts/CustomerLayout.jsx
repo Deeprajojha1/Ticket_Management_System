@@ -81,7 +81,7 @@ const CustomerLayout = () => {
             </Button>
           }
         />
-        <main className={`min-w-0 flex-1 ${isAssistantRoute ? "overflow-hidden p-2 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:p-4 sm:pb-4 lg:p-5" : "overflow-y-auto p-4 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:p-6 sm:pb-6 lg:p-8"}`}>
+        <main className={`min-w-0 flex-1 ${isAssistantRoute ? "overflow-hidden p-2 pb-[calc(8rem+env(safe-area-inset-bottom))] sm:p-4 sm:pb-4 lg:p-5" : "overflow-y-auto p-4 pb-[calc(10rem+env(safe-area-inset-bottom))] sm:p-6 sm:pb-6 lg:p-8"}`}>
           <Outlet />
         </main>
       </div>
