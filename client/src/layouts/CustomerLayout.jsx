@@ -3,6 +3,10 @@ import { Bot, LifeBuoy, LayoutDashboard, LogOut, Ticket } from "lucide-react";
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { useLogoutMutation } from "../app/services/authApi.js";
+import { authApi } from "../app/services/authApi.js";
+import { dashboardApi } from "../features/agent/services/dashboardApi.js";
+import { ticketApi } from "../features/tickets/services/ticketApi.js";
+import { aiApi } from "../features/ai/services/aiApi.js";
 import { clearCredentials } from "../features/auth/authSlice.js";
 import Sidebar from "../components/common/Sidebar/Sidebar.jsx";
 import Button from "../components/common/Button/Button.jsx";
@@ -25,13 +29,18 @@ const CustomerLayout = () => {
   ];
 
   const handleLogout = async () => {
+    dispatch(clearCredentials());
+    dispatch(authApi.util.resetApiState());
+    dispatch(ticketApi.util.resetApiState());
+    dispatch(dashboardApi.util.resetApiState());
+    dispatch(aiApi.util.resetApiState());
+    navigate("/login", { replace: true });
+
     try {
       await logout().unwrap();
-      dispatch(clearCredentials());
       toast.success("Logged out successfully");
-      navigate("/login", { replace: true });
     } catch (error) {
-      toast.error(error?.data?.message || "Logout failed");
+      toast.error(error?.data?.message || "Logged out locally");
     }
   };
 
@@ -52,6 +61,10 @@ const CustomerLayout = () => {
             </div>
             <ConnectionStatus />
             <NotificationBell />
+            <Button variant="ghost" className="px-2 lg:hidden" isLoading={isLoading} onClick={handleLogout} aria-label="Logout">
+              <LogOut className="h-4 w-4" />
+              <span className="sr-only">Logout</span>
+            </Button>
           </div>
         </div>
       </header>

@@ -464,6 +464,10 @@ export const assignTicketToAgent = async ({ ticketId, user, agentId }) => {
     throw new ApiError(404, "Ticket not found");
   }
 
+  if (agentId && !mongoose.Types.ObjectId.isValid(agentId)) {
+    throw new ApiError(400, "Agent id must be valid");
+  }
+
   const targetAgentId = agentId || user._id;
   const targetAgent = await User.findOne({
     _id: targetAgentId,

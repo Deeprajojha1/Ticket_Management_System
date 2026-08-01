@@ -7,6 +7,10 @@ import Button from "../components/common/Button/Button.jsx";
 import ConnectionStatus from "../components/ConnectionStatus.jsx";
 import NotificationBell from "../features/notifications/NotificationBell.jsx";
 import { useLogoutMutation } from "../app/services/authApi.js";
+import { authApi } from "../app/services/authApi.js";
+import { dashboardApi } from "../features/agent/services/dashboardApi.js";
+import { ticketApi } from "../features/tickets/services/ticketApi.js";
+import { aiApi } from "../features/ai/services/aiApi.js";
 import { clearCredentials } from "../features/auth/authSlice.js";
 import { useAuth } from "../hooks/useAuth.js";
 
@@ -43,13 +47,18 @@ const AgentLayout = () => {
   }, []);
 
   const handleLogout = async () => {
+    dispatch(clearCredentials());
+    dispatch(authApi.util.resetApiState());
+    dispatch(ticketApi.util.resetApiState());
+    dispatch(dashboardApi.util.resetApiState());
+    dispatch(aiApi.util.resetApiState());
+    navigate("/login", { replace: true });
+
     try {
       await logout().unwrap();
-      dispatch(clearCredentials());
       toast.success("Logged out successfully");
-      navigate("/login", { replace: true });
     } catch (error) {
-      toast.error(error?.data?.message || "Logout failed");
+      toast.error(error?.data?.message || "Logged out locally");
     }
   };
 

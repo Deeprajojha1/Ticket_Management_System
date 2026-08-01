@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { HelpCircle, LogIn } from "lucide-react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { Link, useLocation, useNavigate } from "../../lib/router.jsx";
+import { Link, useNavigate } from "../../lib/router.jsx";
 import { z } from "zod";
 import Button from "../../components/common/Button/Button.jsx";
 import Card from "../../components/common/Card/Card.jsx";
@@ -12,7 +12,10 @@ import PasswordInput from "../../components/common/PasswordInput/PasswordInput.j
 import { roleHomePath } from "../../constants/auth.js";
 import { setCredentials } from "../../features/auth/authSlice.js";
 import { useDispatch } from "react-redux";
-import { useLoginMutation } from "../../app/services/authApi.js";
+import { authApi, useLoginMutation } from "../../app/services/authApi.js";
+import { dashboardApi } from "../../features/agent/services/dashboardApi.js";
+import { ticketApi } from "../../features/tickets/services/ticketApi.js";
+import { aiApi } from "../../features/ai/services/aiApi.js";
 
 const schema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -26,7 +29,6 @@ const getErrorMessage = (error) =>
 const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const location = useLocation();
   const [login, { isLoading }] = useLoginMutation();
   const {
     register,
@@ -41,9 +43,13 @@ const Login = () => {
     try {
       const response = await login({ email, password }).unwrap();
       const user = response?.data?.user;
+      dispatch(authApi.util.resetApiState());
+      dispatch(ticketApi.util.resetApiState());
+      dispatch(dashboardApi.util.resetApiState());
+      dispatch(aiApi.util.resetApiState());
       dispatch(setCredentials(user));
       toast.success(response?.message || "Logged in successfully");
-      navigate(location.state?.from?.pathname || roleHomePath[user?.role] || "/", { replace: true });
+      navigate(roleHomePath[user?.role] || "/", { replace: true });
     } catch (error) {
       toast.error(getErrorMessage(error));
     }

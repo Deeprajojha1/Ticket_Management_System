@@ -22,6 +22,7 @@ const TicketCard = ({ ticket }) => (
       <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">{ticket.category}</span>
     </div>
     <div className="mt-4 grid gap-2 text-xs text-slate-500 sm:grid-cols-2">
+      <span>Assigned {ticket.assignedAgent?.fullName || "Unassigned"}</span>
       <span>Created {formatDate(ticket.createdAt)}</span>
       <span>Last activity {formatDate(ticket.lastActivity, { withTime: true })}</span>
     </div>

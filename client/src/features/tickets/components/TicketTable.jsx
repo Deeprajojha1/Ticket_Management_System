@@ -11,7 +11,7 @@ const TicketTable = ({ tickets = [] }) => (
       <table className="min-w-full divide-y divide-slate-200">
         <thead className="bg-slate-50">
           <tr>
-            {["Ticket Number", "Title", "Category", "Priority", "Status", "Created Date", "Last Activity", "Actions"].map((head) => (
+            {["Ticket Number", "Title", "Category", "Priority", "Status", "Assigned Agent", "Created Date", "Last Activity", "Actions"].map((head) => (
               <th key={head} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{head}</th>
             ))}
           </tr>
@@ -24,6 +24,7 @@ const TicketTable = ({ tickets = [] }) => (
               <td className="whitespace-nowrap px-4 py-4 text-sm text-slate-600">{ticket.category}</td>
               <td className="whitespace-nowrap px-4 py-4"><PriorityBadge priority={ticket.priority} /></td>
               <td className="whitespace-nowrap px-4 py-4"><TicketStatusBadge status={ticket.status} /></td>
+              <td className="whitespace-nowrap px-4 py-4 text-sm text-slate-600">{ticket.assignedAgent?.fullName || "Unassigned"}</td>
               <td className="whitespace-nowrap px-4 py-4 text-sm text-slate-600">{formatDate(ticket.createdAt)}</td>
               <td className="whitespace-nowrap px-4 py-4 text-sm text-slate-600">{formatDate(ticket.lastActivity, { withTime: true })}</td>
               <td className="whitespace-nowrap px-4 py-4">
