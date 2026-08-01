@@ -69,6 +69,27 @@ const prependNotificationCache = (dispatch, notification) => {
   );
 };
 
+const buildCommentNotification = (payload = {}) => {
+  const commentId = getEntityId(payload.comment);
+  if (!commentId) return null;
+
+  const ticketNumber = payload.ticket?.ticketNumber || payload.ticketNumber || getEntityId(payload.ticketId) || "this ticket";
+
+  return {
+    _id: `comment-${commentId}`,
+    type: "comment.created",
+    title: "New comment",
+    message: `A new comment was added to ticket ${ticketNumber}.`,
+    ticket: payload.ticket || payload.ticketId || null,
+    actor: payload.comment?.user || null,
+    isRead: false,
+    readAt: null,
+    createdAt: payload.comment?.createdAt || new Date().toISOString(),
+    updatedAt: payload.comment?.updatedAt || payload.comment?.createdAt || new Date().toISOString(),
+    metadata: { commentId },
+  };
+};
+
 const requestBrowserNotification = (title, body) => {
   if (!("Notification" in window)) return;
   if (Notification.permission === "granted") {
@@ -152,13 +173,14 @@ const SocketProvider = ({ children }) => {
     const onComment = (payload = {}) => {
       updateCommentCache(dispatch, payload, "add");
       dispatch(ticketApi.util.invalidateTags(["Tickets", { type: "Ticket", id: getEntityId(payload.ticketId) }]));
-      dispatch(dashboardApi.util.invalidateTags(["AgentOverview", "AgentTickets", "AgentActivity", "Notifications"]));
+      dispatch(dashboardApi.util.invalidateTags(["AgentOverview", "AgentTickets", "AgentActivity"]));
       const authorId = getEntityId(payload.comment?.user);
       const commentId = getEntityId(payload.comment);
       const currentUserId = getEntityId(user);
 
       if (authorId && authorId === currentUserId) return;
 
+      prependNotificationCache(dispatch, buildCommentNotification(payload));
       toast.success("New comment received", { id: commentId ? `comment-${commentId}` : "comment-received" });
       requestBrowserNotification("New comment", payload.comment?.message || "A ticket has a new comment");
       playNotificationSound();
