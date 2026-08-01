@@ -15,10 +15,10 @@ const VoiceRecorder = ({ isTranscribing, onAudioReady }) => {
     return (
       <div className="flex flex-wrap items-center gap-2">
         <VoiceVisualizer duration={recorder.duration} />
-        <Button variant="secondary" onClick={stop} isLoading={isTranscribing} aria-label="Stop recording">
+        <Button variant="secondary" className="h-10 w-10 shrink-0 px-0" onClick={stop} isLoading={isTranscribing} aria-label="Stop recording">
           <Square className="h-4 w-4" />
         </Button>
-        <Button variant="ghost" onClick={recorder.cancel} aria-label="Cancel recording">
+        <Button variant="ghost" className="h-10 w-10 shrink-0 px-0" onClick={recorder.cancel} aria-label="Cancel recording">
           <X className="h-4 w-4" />
         </Button>
       </div>
@@ -28,6 +28,7 @@ const VoiceRecorder = ({ isTranscribing, onAudioReady }) => {
   return (
     <Button
       variant="ghost"
+      className="h-10 w-10 shrink-0 px-0"
       onClick={recorder.start}
       disabled={isTranscribing || !recorder.isSupported}
       aria-label="Record voice"

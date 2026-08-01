@@ -178,7 +178,7 @@ const ChatWindow = ({ compact = false, onClose }) => {
   };
 
   return (
-    <section className={`min-h-0 flex overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm ${compact ? "h-[min(640px,calc(100vh-48px))] sm:h-[min(680px,calc(100vh-64px))]" : "flex-1"}`}>
+    <section className={`min-h-0 flex overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm ${compact ? "h-[min(620px,calc(100dvh-16px))] sm:h-[min(680px,calc(100vh-64px))]" : "flex-1"}`}>
       {!compact ? (
         <ConversationSidebar
           activeConversationId={conversationId}
@@ -196,7 +196,7 @@ const ChatWindow = ({ compact = false, onClose }) => {
           onExportPdf={() => exportPdf(displayMessages)}
           onNewChat={startNew}
         />
-        <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-4">
+        <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-3 sm:p-4">
           {conversation.isFetching ? <ChatSkeleton /> : null}
           {!conversation.isFetching && !displayMessages.length ? <EmptyConversation onSelect={(question) => send({ message: question })} /> : null}
           <div className="space-y-5">

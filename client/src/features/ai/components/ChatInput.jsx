@@ -15,7 +15,7 @@ const ChatInput = ({ disabled, isTranscribing, onSend, onTranscribe, value, onCh
   };
 
   return (
-    <form className="border-t border-slate-200 bg-white p-3" onSubmit={submit}>
+    <form className="border-t border-slate-200 bg-white p-2.5 sm:p-3" onSubmit={submit}>
       {attachments.length ? (
         <div className="mb-2 flex flex-wrap gap-2">
           {attachments.map((file) => (
@@ -25,7 +25,7 @@ const ChatInput = ({ disabled, isTranscribing, onSend, onTranscribe, value, onCh
           ))}
         </div>
       ) : null}
-      <div className="flex items-end gap-2 rounded-xl border border-slate-300 bg-white p-2 shadow-sm">
+      <div className="flex items-end gap-1.5 rounded-xl border border-slate-300 bg-white p-1.5 shadow-sm sm:gap-2 sm:p-2">
         <textarea
           rows={1}
           maxLength={2000}
@@ -38,7 +38,7 @@ const ChatInput = ({ disabled, isTranscribing, onSend, onTranscribe, value, onCh
               submit(event);
             }
           }}
-          className="max-h-40 min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none"
+          className="max-h-40 min-h-10 min-w-0 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none"
           placeholder="Ask about your tickets..."
         />
         <input
@@ -49,11 +49,11 @@ const ChatInput = ({ disabled, isTranscribing, onSend, onTranscribe, value, onCh
           className="sr-only"
           onChange={(event) => setAttachments(Array.from(event.target.files || []).slice(0, 5))}
         />
-        <Button variant="ghost" onClick={() => fileRef.current?.click()} aria-label="Attach file">
+        <Button variant="ghost" className="h-10 w-10 shrink-0 px-0" onClick={() => fileRef.current?.click()} aria-label="Attach file">
           <Paperclip className="h-4 w-4" />
         </Button>
         <VoiceRecorder isTranscribing={isTranscribing} onAudioReady={onTranscribe} />
-        <Button type="submit" isLoading={disabled} aria-label="Send message">
+        <Button type="submit" className="h-10 w-10 shrink-0 px-0" isLoading={disabled} aria-label="Send message">
           <Send className="h-4 w-4" />
         </Button>
       </div>

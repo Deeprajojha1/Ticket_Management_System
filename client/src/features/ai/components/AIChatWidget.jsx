@@ -26,7 +26,7 @@ const AIChatWidget = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 24, scale: 0.94 }}
             transition={{ duration: 0.18, ease: "easeOut" }}
-            className="fixed bottom-4 right-4 z-50 w-[calc(100vw-32px)] origin-bottom-right overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-slate-200 sm:bottom-6 sm:right-6 sm:w-[460px] lg:hidden"
+            className="fixed inset-x-2 bottom-2 z-50 origin-bottom-right overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-slate-200 sm:inset-x-auto sm:bottom-6 sm:right-6 sm:w-[460px] lg:hidden"
           >
             <ChatWindow compact onClose={() => setOpen(false)} />
           </motion.div>
