@@ -41,7 +41,7 @@ const AgentTickets = ({ assignedOnly = false }) => {
   };
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
+    <div className="mx-auto max-w-7xl space-y-6 pb-[calc(2rem+env(safe-area-inset-bottom))]">
       <DashboardHeader
         eyebrow={assignedOnly ? "Assigned Tickets" : "All Tickets"}
         title={assignedOnly ? "My assigned queue" : "Ticket management"}

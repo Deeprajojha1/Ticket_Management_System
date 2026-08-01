@@ -8,7 +8,7 @@ const Pagination = ({ pagination = {}, onPageChange }) => {
     .filter((page, index, list) => page <= total && list.indexOf(page) === index);
 
   return (
-    <div className="flex flex-col items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 sm:flex-row">
+    <div className="mb-[calc(5rem+env(safe-area-inset-bottom))] flex flex-col items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 sm:mb-0 sm:flex-row">
       <p className="text-sm text-slate-600">Page {current} of {total}</p>
       <div className="flex flex-wrap items-center justify-center gap-2">
         <Button variant="secondary" disabled={!pagination.previousPage} onClick={() => onPageChange(pagination.previousPage)}>
