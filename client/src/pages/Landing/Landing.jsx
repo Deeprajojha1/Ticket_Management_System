@@ -22,7 +22,7 @@ const Landing = () => (
         <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600">
           SupportDesk AI brings customer ticket history, secure role-based workflows, file attachments, realtime replies, and AI assistance into one focused helpdesk experience.
         </p>
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+        <div className="mt-8 grid grid-cols-2 gap-3 sm:flex sm:flex-row">
           <Button as={Link} to="/register" className="w-full sm:w-auto">
             Create account <ArrowRight className="h-4 w-4" />
           </Button>
