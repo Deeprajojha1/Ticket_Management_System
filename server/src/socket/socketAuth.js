@@ -17,7 +17,7 @@ const parseCookies = (cookieHeader = "") =>
 export const authenticateSocket = async (socket, next) => {
   try {
     const cookies = parseCookies(socket.handshake.headers.cookie);
-    const token = cookies[COOKIE_NAMES.ACCESS_TOKEN];
+    const token = socket.handshake.auth?.token || cookies[COOKIE_NAMES.ACCESS_TOKEN];
 
     if (!token) {
       console.log("Socket authentication failed: missing token");

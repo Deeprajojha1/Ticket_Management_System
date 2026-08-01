@@ -2,6 +2,7 @@ import ApiResponse from "../utils/ApiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { COOKIE_NAMES } from "../utils/constants.js";
 import {
+  createSocketToken,
   getUserProfile,
   loginUser,
   logoutUser,
@@ -37,4 +38,10 @@ export const refreshToken = asyncHandler(async (req, res) => {
   const user = await refreshAuthTokens(req.cookies?.[COOKIE_NAMES.REFRESH_TOKEN], res);
 
   res.status(200).json(new ApiResponse(200, { user }, "Token refreshed successfully"));
+});
+
+export const socketToken = asyncHandler(async (req, res) => {
+  const token = createSocketToken(req.user);
+
+  res.status(200).json(new ApiResponse(200, { token }, "Socket token created successfully"));
 });

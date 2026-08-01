@@ -40,6 +40,22 @@ const cookieOptions = (maxAge) => ({
 
 const sanitizeUser = (user) => user.toJSON();
 
+export const createSocketToken = (user) => {
+  if (!process.env.ACCESS_TOKEN_SECRET) {
+    throw new ApiError(500, "Socket authentication is not configured");
+  }
+
+  return jwt.sign(
+    {
+      id: user._id,
+      role: user.role,
+      tokenType: "socket",
+    },
+    process.env.ACCESS_TOKEN_SECRET,
+    { expiresIn: "5m" },
+  );
+};
+
 const attachAuthCookies = (res, accessToken, refreshToken) => {
   const accessMaxAge = expiryToMilliseconds(process.env.ACCESS_TOKEN_EXPIRY || DEFAULT_ACCESS_TOKEN_EXPIRY);
   const refreshMaxAge = expiryToMilliseconds(process.env.REFRESH_TOKEN_EXPIRY || DEFAULT_REFRESH_TOKEN_EXPIRY);

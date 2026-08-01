@@ -4,6 +4,7 @@ import { useDispatch } from "react-redux";
 import { dashboardApi } from "../features/agent/services/dashboardApi.js";
 import { ticketApi } from "../features/tickets/services/ticketApi.js";
 import { useAuth } from "../hooks/useAuth.js";
+import axiosInstance from "../utils/axiosInstance.js";
 import { createSocket, disconnectSocket } from "./socket.js";
 import { SocketContext } from "./socketContext.js";
 import { SOCKET_EVENTS } from "./socketEvents.js";
@@ -72,14 +73,32 @@ const SocketProvider = ({ children }) => {
   const socket = useMemo(() => createSocket(), []);
 
   useEffect(() => {
+    let isMounted = true;
+
     if (!isAuthenticated) {
       disconnectSocket();
       window.queueMicrotask(() => setConnectionState("disconnected"));
       return;
     }
 
+    const connectWithSocketToken = async () => {
+      try {
+        const response = await axiosInstance.get("/auth/socket-token");
+        if (!isMounted) return;
+
+        socket.auth = { token: response.data?.data?.token };
+        socket.connect();
+      } catch (error) {
+        if (!isMounted) return;
+
+        console.error("Socket token request failed:", error.response?.data?.message || error.message);
+        socket.auth = {};
+        socket.connect();
+      }
+    };
+
     window.queueMicrotask(() => setConnectionState("connecting"));
-    socket.connect();
+    connectWithSocketToken();
 
     const onConnect = () => {
       setConnectionState("connected");
@@ -132,7 +151,7 @@ const SocketProvider = ({ children }) => {
     const onNetworkOffline = () => setConnectionState("offline");
     const onNetworkOnline = () => {
       setConnectionState(socket.connected ? "connected" : "reconnecting");
-      if (!socket.connected) socket.connect();
+      if (!socket.connected) connectWithSocketToken();
     };
 
     socket.on("connect", onConnect);
@@ -162,6 +181,7 @@ const SocketProvider = ({ children }) => {
     }
 
     return () => {
+      isMounted = false;
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
       socket.off("connect_error", onConnectError);
