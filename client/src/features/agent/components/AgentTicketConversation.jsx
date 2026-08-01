@@ -71,11 +71,13 @@ const AgentTicketConversation = ({ ticket }) => {
           <CommentInput isLoading={isSending} onSubmit={handleComment} uploadProgress={uploadProgress} />
         ) : isConversationLocked ? (
           <TicketEmptyState
+            compact
             title="Conversation locked"
             description={`This ticket is ${ticket.status.toLowerCase()}. Reopen it before sending more replies.`}
           />
         ) : (
           <TicketEmptyState
+            compact
             title="Agent reply locked"
             description="Assign this ticket to yourself before sending a customer reply."
           />
