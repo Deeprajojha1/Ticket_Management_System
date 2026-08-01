@@ -38,7 +38,7 @@ const MyTickets = () => {
           <p className="text-sm font-semibold text-blue-700">My Tickets</p>
           <h1 className="mt-1 text-2xl font-bold text-slate-950">Support requests</h1>
         </div>
-        <Button as={Link} to="/customer/tickets/create">
+        <Button as={Link} to="/customer/tickets/create" className="w-44 self-end sm:w-auto sm:self-auto">
           <Plus className="h-4 w-4" />
           Create Ticket
         </Button>
