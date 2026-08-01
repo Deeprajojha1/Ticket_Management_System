@@ -30,6 +30,14 @@ const getErrorMessage = async (error) => {
   return error?.response?.data?.message || "Attachment could not be loaded";
 };
 
+const escapeHtml = (value = "") =>
+  value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
 const AttachmentPreview = ({ attachment, attachmentIndex, commentId, file, onRemove, ticketId, variant = "card" }) => {
   const [isOpening, setIsOpening] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -51,7 +59,10 @@ const AttachmentPreview = ({ attachment, attachmentIndex, commentId, file, onRem
 
   const fetchAttachmentBlob = useCallback(async (url) => {
     const response = await axiosInstance.get(url, { responseType: "blob" });
-    return new Blob([response.data], { type: response.headers["content-type"] || type || "application/octet-stream" });
+    const responseType = response.headers["content-type"];
+    const blobType = type || (responseType && responseType !== "application/octet-stream" ? responseType : "") || "application/octet-stream";
+
+    return new Blob([response.data], { type: blobType });
   }, [type]);
 
   useEffect(() => {
@@ -104,7 +115,20 @@ const AttachmentPreview = ({ attachment, attachmentIndex, commentId, file, onRem
     try {
       const blob = await fetchAttachmentBlob(openUrl);
       const blobUrl = URL.createObjectURL(blob);
-      previewWindow.location.href = blobUrl;
+      const safeName = escapeHtml(name);
+
+      if (blob.type.startsWith("image/")) {
+        previewWindow.document.open();
+        previewWindow.document.write(`<!doctype html><html><head><title>${safeName}</title><style>body{margin:0;background:#0f172a;display:grid;min-height:100vh;place-items:center}img{max-width:100%;max-height:100vh;object-fit:contain}</style></head><body><img src="${blobUrl}" alt="${safeName}"></body></html>`);
+        previewWindow.document.close();
+      } else if (blob.type === "application/pdf") {
+        previewWindow.document.open();
+        previewWindow.document.write(`<!doctype html><html><head><title>${safeName}</title><style>html,body,iframe{height:100%;margin:0;width:100%;border:0}</style></head><body><iframe src="${blobUrl}" title="${safeName}"></iframe></body></html>`);
+        previewWindow.document.close();
+      } else {
+        previewWindow.location.href = blobUrl;
+      }
+
       setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
     } catch (error) {
       previewWindow.close();
