@@ -1,4 +1,5 @@
 import { Server } from "socket.io";
+import { corsOptions } from "../config/cors.js";
 import { authenticateSocket } from "./socketAuth.js";
 import { SOCKET_EVENTS } from "./socketConstants.js";
 import { registerSocketEvents } from "./socketEvents.js";
@@ -11,10 +12,8 @@ const presenceStore = {
 
 export const initializeSocket = (httpServer) => {
   ioInstance = new Server(httpServer, {
-    cors: {
-      origin: process.env.CLIENT_URL || "http://localhost:5173",
-      credentials: true,
-    },
+    cors: corsOptions,
+    allowEIO3: false,
   });
 
   ioInstance.use(authenticateSocket);

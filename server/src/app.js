@@ -7,6 +7,7 @@ import helmet from "helmet";
 import hpp from "hpp";
 import xssClean from "xss-clean";
 import swaggerUi from "swagger-ui-express";
+import { corsOptions } from "./config/cors.js";
 import loggerMiddleware from "./middlewares/logger.middleware.js";
 import errorMiddleware from "./middlewares/error.middleware.js";
 import notFoundMiddleware from "./middlewares/notFound.middleware.js";
@@ -22,12 +23,7 @@ const app = express();
 
 app.set("trust proxy", 1);
 
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
-    credentials: true,
-  }),
-);
+app.use(cors(corsOptions));
 app.use(helmet());
 app.use(mongoSanitize());
 app.use(hpp());
