@@ -1,10 +1,12 @@
 import ApiResponse from "../utils/ApiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import {
+  assignTicketToAgent,
   assignTicketToSelf,
   createTicket,
   deleteCustomerTicket,
   getAgentTickets,
+  getAssignableAgents,
   getMyTickets,
   getTicketAttachmentStream,
   getTicketById,
@@ -113,7 +115,17 @@ export const updateTicketPriorityController = asyncHandler(async (req, res) => {
 });
 
 export const assignTicketController = asyncHandler(async (req, res) => {
-  const ticket = await assignTicketToSelf({ ticketId: req.params.id, user: req.user });
+  const ticket = await assignTicketToAgent({
+    ticketId: req.params.id,
+    user: req.user,
+    agentId: req.body.agentId,
+  });
 
   res.status(200).json(new ApiResponse(200, { ticket }, "Ticket assigned successfully"));
+});
+
+export const getAssignableAgentsController = asyncHandler(async (_req, res) => {
+  const agents = await getAssignableAgents();
+
+  res.status(200).json(new ApiResponse(200, { agents }, "Agents fetched successfully"));
 });

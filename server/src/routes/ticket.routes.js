@@ -5,6 +5,7 @@ import {
   deleteTicketController,
   downloadTicketAttachmentController,
   getAgentTicketsController,
+  getAssignableAgentsController,
   getMyTicketsController,
   getTicketByIdController,
   openTicketAttachmentController,
@@ -61,6 +62,10 @@ agentRouter.use(authenticateUser, authorizeRoles(USER_ROLES.AGENT));
 agentRouter
   .route("/tickets")
   .get(ticketQueryValidator, validate, getAgentTicketsController);
+
+agentRouter
+  .route("/agents")
+  .get(getAssignableAgentsController);
 
 agentRouter
   .route("/tickets/:id/status")

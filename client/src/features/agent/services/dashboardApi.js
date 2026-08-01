@@ -20,7 +20,7 @@ const axiosBaseQuery =
 export const dashboardApi = createApi({
   reducerPath: "dashboardApi",
   baseQuery: axiosBaseQuery(),
-  tagTypes: ["AgentOverview", "AgentTickets", "AgentActivity", "Notifications"],
+  tagTypes: ["AgentOverview", "AgentTickets", "AgentActivity", "Agents", "Notifications"],
   endpoints: (builder) => ({
     overview: builder.query({
       query: () => ({ url: "/dashboard/overview", method: "GET" }),
@@ -41,6 +41,10 @@ export const dashboardApi = createApi({
     allTickets: builder.query({
       query: (params = {}) => ({ url: "/agent/tickets", method: "GET", params }),
       providesTags: ["AgentTickets"],
+    }),
+    agents: builder.query({
+      query: () => ({ url: "/agent/agents", method: "GET" }),
+      providesTags: ["Agents"],
     }),
     assignedTickets: builder.query({
       query: (params = {}) => ({ url: "/dashboard/my-tickets", method: "GET", params }),
@@ -67,9 +71,10 @@ export const dashboardApi = createApi({
       invalidatesTags: ["AgentTickets", "AgentOverview", "AgentActivity"],
     }),
     assignTicket: builder.mutation({
-      query: (ticketId) => ({
+      query: ({ ticketId, agentId }) => ({
         url: `/agent/tickets/${ticketId}/assign`,
         method: "PATCH",
+        data: agentId ? { agentId } : {},
       }),
       invalidatesTags: ["AgentTickets", "AgentOverview", "AgentActivity", "Notifications"],
     }),
@@ -86,6 +91,7 @@ export const dashboardApi = createApi({
 
 export const {
   useAllTicketsQuery,
+  useAgentsQuery,
   useAssignTicketMutation,
   useAssignedTicketsQuery,
   useCategoryChartQuery,

@@ -38,10 +38,10 @@ const AssignedTickets = () => {
     availableQuery.refetch();
   };
 
-  const confirmAssign = async () => {
+  const confirmAssign = async (agentId) => {
     try {
-      await assignTicket(assignTarget._id).unwrap();
-      toast.success("Ticket assigned to you");
+      await assignTicket({ ticketId: assignTarget._id, agentId }).unwrap();
+      toast.success("Ticket assigned successfully");
       setAssignTarget(null);
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Assignment failed"));

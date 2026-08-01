@@ -1,6 +1,7 @@
 import axios from "axios";
 import mongoose from "mongoose";
 import Ticket from "../models/Ticket.model.js";
+import User from "../models/User.model.js";
 import APIFeatures from "../utils/APIFeatures.js";
 import ApiError from "../utils/ApiError.js";
 import cloudinary, { uploadBufferToCloudinary } from "../utils/cloudinary.js";
@@ -451,26 +452,42 @@ export const updateTicketPriority = async ({ ticketId, priority, user }) => {
   return populatedTicket;
 };
 
-export const assignTicketToSelf = async ({ ticketId, user }) => {
+export const getAssignableAgents = async () =>
+  User.find({ role: USER_ROLES.AGENT, isActive: true })
+    .select("fullName email role avatar")
+    .sort({ fullName: 1 });
+
+export const assignTicketToAgent = async ({ ticketId, user, agentId }) => {
   const ticket = await Ticket.findOne({ _id: ticketId, isDeleted: false });
 
   if (!ticket) {
     throw new ApiError(404, "Ticket not found");
   }
 
+  const targetAgentId = agentId || user._id;
+  const targetAgent = await User.findOne({
+    _id: targetAgentId,
+    role: USER_ROLES.AGENT,
+    isActive: true,
+  }).select("fullName email role avatar");
+
+  if (!targetAgent) {
+    throw new ApiError(404, "Agent not found");
+  }
+
   const previousAgent = ticket.assignedAgent;
-  ticket.assignedAgent = user._id;
+  ticket.assignedAgent = targetAgent._id;
   ticket.lastActivity = new Date();
   ticket.activityLog.push({
     action: "Assigned to Agent",
     actor: user._id,
     from: previousAgent instanceof mongoose.Types.ObjectId ? previousAgent.toString() : null,
-    to: user._id.toString(),
+    to: targetAgent._id.toString(),
   });
 
   await ticket.save({ validateBeforeSave: false });
   const populatedTicket = await populateTicket(Ticket.findById(ticket._id));
-  const payload = { ticket: populatedTicket, assignedAgent: user };
+  const payload = { ticket: populatedTicket, assignedAgent: targetAgent };
   await createAuditLog({
     actor: user._id,
     action: "ticket.assigned",
@@ -478,16 +495,18 @@ export const assignTicketToSelf = async ({ ticketId, user }) => {
     entityId: ticket._id,
     ticket: ticket._id,
     before: { assignedAgent: previousAgent },
-    after: { assignedAgent: user._id },
+    after: { assignedAgent: targetAgent._id },
   });
   await createNotifications([
     {
-      recipient: user._id,
+      recipient: targetAgent._id,
       actor: user._id,
       ticket: ticket._id,
       type: "ticket.assigned",
-      title: "Ticket assigned to you",
-      message: `Ticket ${ticket.ticketNumber} has been assigned to you.`,
+      title: targetAgent._id.equals(user._id) ? "Ticket assigned to you" : "Ticket assigned",
+      message: targetAgent._id.equals(user._id)
+        ? `Ticket ${ticket.ticketNumber} has been assigned to you.`
+        : `Ticket ${ticket.ticketNumber} has been assigned to ${targetAgent.fullName}.`,
     },
     {
       recipient: ticket.createdBy,
@@ -500,8 +519,10 @@ export const assignTicketToSelf = async ({ ticketId, user }) => {
   ]);
 
   emitToTicket(ticket._id, SOCKET_EVENTS.TICKET_ASSIGNED, payload);
-  emitToUser(user._id, SOCKET_EVENTS.TICKET_ASSIGNED, payload);
+  emitToUser(targetAgent._id, SOCKET_EVENTS.TICKET_ASSIGNED, payload);
   emitToUser(ticket.createdBy, SOCKET_EVENTS.TICKET_ASSIGNED, payload);
 
   return populatedTicket;
 };
+
+export const assignTicketToSelf = ({ ticketId, user }) => assignTicketToAgent({ ticketId, user });
