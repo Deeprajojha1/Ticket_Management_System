@@ -48,6 +48,27 @@ const updateCommentCache = (dispatch, payload = {}, action = "add") => {
   );
 };
 
+const prependNotificationCache = (dispatch, notification) => {
+  if (!notification?._id) return;
+
+  dispatch(
+    dashboardApi.util.updateQueryData("notifications", { page: 1, limit: 8 }, (draft) => {
+      const notifications = draft?.data?.notifications;
+      if (!Array.isArray(notifications)) return;
+
+      const exists = notifications.some((item) => item._id === notification._id);
+      if (exists) return;
+
+      notifications.unshift(notification);
+      notifications.splice(8);
+
+      if (draft.data?.pagination?.totalDocuments !== undefined) {
+        draft.data.pagination.totalDocuments += 1;
+      }
+    }),
+  );
+};
+
 const requestBrowserNotification = (title, body) => {
   if (!("Notification" in window)) return;
   if (Notification.permission === "granted") {
@@ -148,9 +169,11 @@ const SocketProvider = ({ children }) => {
       dispatch(dashboardApi.util.invalidateTags(["AgentOverview", "AgentTickets", "AgentActivity", "Notifications"]));
     };
     const onNotification = (payload = {}) => {
-      dispatch(dashboardApi.util.invalidateTags(["Notifications", "AgentOverview", "AgentActivity"]));
       const notification = payload.notification;
       const notificationId = getEntityId(notification);
+
+      prependNotificationCache(dispatch, notification);
+      dispatch(dashboardApi.util.invalidateTags(["Notifications", "AgentOverview", "AgentActivity"]));
 
       if (notification?.type === "comment.created") return;
 
