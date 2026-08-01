@@ -29,7 +29,7 @@ const baseCookieOptions = () => ({
   secure: process.env.COOKIE_SECURE
     ? process.env.COOKIE_SECURE === "true"
     : process.env.NODE_ENV === "production",
-  sameSite: "strict",
+  sameSite: process.env.COOKIE_SAME_SITE || (process.env.NODE_ENV === "production" ? "none" : "lax"),
   path: "/",
 });
 
