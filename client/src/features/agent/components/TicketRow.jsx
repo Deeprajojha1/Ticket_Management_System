@@ -8,31 +8,29 @@ import StatusDropdown from "./StatusDropdown.jsx";
 
 const TicketRow = ({ ticket, onAssign, onOpen }) => (
   <tr className="hover:bg-slate-50">
-    <td className="whitespace-nowrap px-4 py-4 text-sm font-semibold text-slate-900">{ticket.ticketNumber}</td>
-    <td className="px-4 py-4">
-      <p className="text-sm font-semibold text-slate-900">{ticket.createdBy?.fullName || "Customer"}</p>
-      <p className="text-xs text-slate-500">{ticket.createdBy?.email}</p>
+    <td className="truncate px-3 py-4 text-sm font-semibold text-slate-900">{ticket.ticketNumber}</td>
+    <td className="min-w-0 px-3 py-4">
+      <p className="truncate text-sm font-semibold text-slate-900">{ticket.createdBy?.fullName || "Customer"}</p>
+      <p className="truncate text-xs text-slate-500">{ticket.createdBy?.email}</p>
     </td>
-    <td className="max-w-xs truncate px-4 py-4 text-sm text-slate-700">{ticket.title}</td>
-    <td className="whitespace-nowrap px-4 py-4 text-sm text-slate-600">{ticket.category}</td>
-    <td className="whitespace-nowrap px-4 py-4"><PriorityDropdown ticket={ticket} /></td>
-    <td className="whitespace-nowrap px-4 py-4"><StatusDropdown ticket={ticket} /></td>
-    <td className="px-4 py-4 text-sm text-slate-600">{ticket.assignedAgent?.fullName || "Unassigned"}</td>
-    <td className="whitespace-nowrap px-4 py-4 text-sm text-slate-600">{formatDate(ticket.createdAt)}</td>
-    <td className="whitespace-nowrap px-4 py-4 text-sm text-slate-600">{formatDate(ticket.lastActivity, { withTime: true })}</td>
-    <td className="whitespace-nowrap px-4 py-4">
-      <div className="flex items-center gap-2">
+    <td className="truncate px-3 py-4 text-sm text-slate-700">{ticket.title}</td>
+    <td className="truncate px-3 py-4 text-sm text-slate-600">{ticket.category}</td>
+    <td className="px-3 py-4"><PriorityBadge priority={ticket.priority} /></td>
+    <td className="px-3 py-4"><TicketStatusBadge status={ticket.status} /></td>
+    <td className="truncate px-3 py-4 text-sm text-slate-600">{ticket.assignedAgent?.fullName || "Unassigned"}</td>
+    <td className="truncate px-3 py-4 text-sm text-slate-600">{formatDate(ticket.createdAt)}</td>
+    <td className="truncate px-3 py-4 text-sm text-slate-600">{formatDate(ticket.lastActivity, { withTime: true })}</td>
+    <td className="px-3 py-4">
+      <div className="flex items-center justify-end gap-2">
         {!ticket.assignedAgent?._id ? (
-          <Button variant="secondary" className="min-h-9 px-3 py-1.5 text-xs" onClick={() => onAssign(ticket)}>
+          <Button variant="secondary" className="min-h-9 px-2 py-1.5 text-xs" onClick={() => onAssign(ticket)} title="Assign">
             <UserPlus className="h-3.5 w-3.5" />
-            Assign
+            <span className="sr-only">Assign</span>
           </Button>
         ) : null}
-        <button className="focus-ring rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50" onClick={() => onOpen(ticket)}>
-          <span className="inline-flex items-center gap-1.5">
-            <ExternalLink className="h-3.5 w-3.5" />
-          Open
-          </span>
+        <button className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50" onClick={() => onOpen(ticket)} title="Open">
+          <ExternalLink className="h-3.5 w-3.5" />
+          <span className="sr-only">Open</span>
         </button>
       </div>
     </td>

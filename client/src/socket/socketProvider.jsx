@@ -89,6 +89,10 @@ const SocketProvider = ({ children }) => {
       setConnectionState(navigator.onLine ? "disconnected" : "offline");
       toast.error("Realtime connection lost");
     };
+    const onConnectError = (error) => {
+      setConnectionState("reconnecting");
+      console.error("Realtime connection failed:", error.message);
+    };
     const onReconnectAttempt = () => setConnectionState("reconnecting");
     const onReconnect = () => {
       setConnectionState("connected");
@@ -133,6 +137,7 @@ const SocketProvider = ({ children }) => {
 
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
+    socket.on("connect_error", onConnectError);
     socket.io.on("reconnect_attempt", onReconnectAttempt);
     socket.io.on("reconnect", onReconnect);
     socket.on(SOCKET_EVENTS.USER_ONLINE, onOnline);
@@ -159,6 +164,7 @@ const SocketProvider = ({ children }) => {
     return () => {
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
+      socket.off("connect_error", onConnectError);
       socket.io.off("reconnect_attempt", onReconnectAttempt);
       socket.io.off("reconnect", onReconnect);
       socket.off(SOCKET_EVENTS.USER_ONLINE, onOnline);
