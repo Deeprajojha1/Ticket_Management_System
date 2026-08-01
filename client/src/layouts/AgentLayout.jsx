@@ -5,7 +5,6 @@ import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import Button from "../components/common/Button/Button.jsx";
 import ConnectionStatus from "../components/ConnectionStatus.jsx";
-import NotificationBell from "../features/notifications/NotificationBell.jsx";
 import { useLogoutMutation } from "../app/services/authApi.js";
 import { authApi } from "../app/services/authApi.js";
 import { dashboardApi } from "../features/agent/services/dashboardApi.js";
@@ -132,7 +131,6 @@ const AgentLayout = () => {
                 <span className="ml-8 rounded border border-slate-200 px-1.5 py-0.5 text-xs">Ctrl K</span>
               </button>
               <ConnectionStatus />
-              <NotificationBell />
               <div className="hidden items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 sm:flex">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
                   {(user?.fullName || "A").slice(0, 1).toUpperCase()}

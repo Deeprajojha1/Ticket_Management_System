@@ -93,7 +93,7 @@ const CommentInput = ({ disabled = false, isLoading, onSubmit, onTyping, onStopT
                 files={field.value}
                 onChange={field.onChange}
                 disabled={disabled}
-                progress={uploadProgress}
+                progress={isLoading ? uploadProgress : 0}
                 variant="compact"
               />
             )}

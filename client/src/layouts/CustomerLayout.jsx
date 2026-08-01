@@ -11,7 +11,6 @@ import { clearCredentials } from "../features/auth/authSlice.js";
 import Sidebar from "../components/common/Sidebar/Sidebar.jsx";
 import Button from "../components/common/Button/Button.jsx";
 import ConnectionStatus from "../components/ConnectionStatus.jsx";
-import NotificationBell from "../features/notifications/NotificationBell.jsx";
 import AIChatWidget from "../features/ai/components/AIChatWidget.jsx";
 import { useAuth } from "../hooks/useAuth.js";
 
@@ -60,7 +59,6 @@ const CustomerLayout = () => {
               <p className="text-xs text-slate-500">{user?.email}</p>
             </div>
             <ConnectionStatus />
-            <NotificationBell />
             <Button variant="ghost" className="px-2 lg:hidden" isLoading={isLoading} onClick={handleLogout} aria-label="Logout">
               <LogOut className="h-4 w-4" />
               <span className="sr-only">Logout</span>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Lock } from "lucide-react";
+import toast from "react-hot-toast";
 import Card from "../../../components/common/Card/Card.jsx";
 import { useAuth } from "../../../hooks/useAuth.js";
 import CommentInput from "../../tickets/components/CommentInput.jsx";
