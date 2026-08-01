@@ -6,7 +6,7 @@ const styles = {
 };
 
 const TicketStatusBadge = ({ status = "Open" }) => (
-  <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${styles[status] || styles.Open}`}>
+  <span className={`inline-flex min-w-max items-center whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-semibold ${styles[status] || styles.Open}`}>
     {status}
   </span>
 );
