@@ -49,7 +49,7 @@ const AssignedTickets = () => {
   };
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 pb-[calc(2rem+env(safe-area-inset-bottom))]">
+    <div className="mx-auto max-w-7xl space-y-6">
       <DashboardHeader eyebrow="Assigned Tickets" title="My assigned queue" description="Focus on tickets currently owned by you." onRefresh={refetch} isRefreshing={isFetching} />
       <div className="flex justify-end">
         <Button variant="secondary" onClick={() => exportTicketsCsv(tickets)}>
