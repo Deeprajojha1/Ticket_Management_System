@@ -16,6 +16,7 @@ import { authApi, useLoginMutation } from "../../app/services/authApi.js";
 import { dashboardApi } from "../../features/agent/services/dashboardApi.js";
 import { ticketApi } from "../../features/tickets/services/ticketApi.js";
 import { aiApi } from "../../features/ai/services/aiApi.js";
+import { setAuthRefreshEnabled } from "../../utils/axiosInstance.js";
 
 const schema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -48,6 +49,7 @@ const Login = () => {
       dispatch(dashboardApi.util.resetApiState());
       dispatch(aiApi.util.resetApiState());
       dispatch(setCredentials(user));
+      setAuthRefreshEnabled(true);
       toast.success(response?.message || "Logged in successfully");
       navigate(roleHomePath[user?.role] || "/", { replace: true });
     } catch (error) {

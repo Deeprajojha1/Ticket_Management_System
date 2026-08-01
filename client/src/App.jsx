@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Route, Routes } from "./lib/router.jsx";
 import { useDispatch } from "react-redux";
 import { useProfileQuery } from "./app/services/authApi.js";
@@ -33,7 +33,10 @@ import { disconnectSocket } from "./socket/socket.js";
 
 const App = () => {
   const dispatch = useDispatch();
-  const { data, isSuccess, isError, isFetching } = useProfileQuery();
+  const [isProfileCheckDisabled, setIsProfileCheckDisabled] = useState(false);
+  const { data, isSuccess, isError, isFetching } = useProfileQuery(undefined, {
+    skip: isProfileCheckDisabled,
+  });
 
   useEffect(() => {
     if (isSuccess) {
@@ -47,6 +50,7 @@ const App = () => {
 
   useEffect(() => {
     const handleAuthExpired = () => {
+      setIsProfileCheckDisabled(true);
       disconnectSocket();
       dispatch(clearCredentials());
       dispatch(authApi.util.resetApiState());

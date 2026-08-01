@@ -27,6 +27,7 @@ export const setAuthRefreshEnabled = (enabled) => {
 };
 
 const notifyAuthExpired = () => {
+  setAuthRefreshEnabled(false);
   window.dispatchEvent(new CustomEvent("supportdesk:auth-expired"));
 };
 
