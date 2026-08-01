@@ -113,6 +113,7 @@ const exportPdf = (messages) => {
 const ChatWindow = ({ compact = false, onClose }) => {
   const [conversationId, setConversationId] = useState(null);
   const [draft, setDraft] = useState("");
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [localMessages, setLocalMessages] = useState([]);
   const history = useHistoryQuery({ page: 1, limit: 30 });
   const conversation = useConversationQuery(conversationId, { skip: !conversationId });
@@ -160,6 +161,7 @@ const ChatWindow = ({ compact = false, onClose }) => {
     setConversationId(null);
     setLocalMessages([]);
     setDraft("");
+    setIsHistoryOpen(false);
   };
 
   const removeConversation = async (item) => {
@@ -178,7 +180,7 @@ const ChatWindow = ({ compact = false, onClose }) => {
   };
 
   return (
-    <section className={`min-h-0 flex overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm ${compact ? "h-[min(620px,calc(100dvh-16px))] sm:h-[min(680px,calc(100vh-64px))]" : "flex-1"}`}>
+    <section className={`relative min-h-0 flex overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm ${compact ? "h-[min(620px,calc(100dvh-16px))] sm:h-[min(680px,calc(100vh-64px))]" : "flex-1"}`}>
       {!compact ? (
         <ConversationSidebar
           activeConversationId={conversationId}
@@ -186,6 +188,22 @@ const ChatWindow = ({ compact = false, onClose }) => {
           onDelete={removeConversation}
           onSelect={(item) => setConversationId(item._id)}
         />
+      ) : null}
+      {compact && isHistoryOpen ? (
+        <>
+          <button className="absolute inset-0 z-10 bg-slate-950/20" type="button" onClick={() => setIsHistoryOpen(false)} aria-label="Close previous chats" />
+          <ConversationSidebar
+            compact
+            activeConversationId={conversationId}
+            conversations={conversations}
+            onClose={() => setIsHistoryOpen(false)}
+            onDelete={removeConversation}
+            onSelect={(item) => {
+              setConversationId(item._id);
+              setIsHistoryOpen(false);
+            }}
+          />
+        </>
       ) : null}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <ChatHeader
@@ -195,6 +213,7 @@ const ChatWindow = ({ compact = false, onClose }) => {
           onCopyConversation={copyConversation}
           onExportPdf={() => exportPdf(displayMessages)}
           onNewChat={startNew}
+          onToggleHistory={() => setIsHistoryOpen((value) => !value)}
         />
         <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-3 sm:p-4">
           {conversation.isFetching ? <ChatSkeleton /> : null}
