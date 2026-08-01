@@ -38,7 +38,6 @@ const TicketDetails = () => {
           if (event.total) setUploadProgress(Math.round((event.loaded * 100) / event.total));
         },
       }).unwrap();
-      toast.success("Comment added");
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Could not add comment"));
       throw error;

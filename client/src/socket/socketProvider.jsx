@@ -132,7 +132,13 @@ const SocketProvider = ({ children }) => {
       updateCommentCache(dispatch, payload, "add");
       dispatch(ticketApi.util.invalidateTags(["Tickets", { type: "Ticket", id: getEntityId(payload.ticketId) }]));
       dispatch(dashboardApi.util.invalidateTags(["AgentOverview", "AgentTickets", "AgentActivity", "Notifications"]));
-      toast.success("New comment received");
+      const authorId = getEntityId(payload.comment?.user);
+      const commentId = getEntityId(payload.comment);
+      const currentUserId = getEntityId(user);
+
+      if (authorId && authorId === currentUserId) return;
+
+      toast.success("New comment received", { id: commentId ? `comment-${commentId}` : "comment-received" });
       requestBrowserNotification("New comment", payload.comment?.message || "A ticket has a new comment");
       playNotificationSound();
     };
@@ -143,7 +149,12 @@ const SocketProvider = ({ children }) => {
     };
     const onNotification = (payload = {}) => {
       dispatch(dashboardApi.util.invalidateTags(["Notifications", "AgentOverview", "AgentActivity"]));
-      toast.success(payload.notification?.title || "New notification");
+      const notification = payload.notification;
+      const notificationId = getEntityId(notification);
+
+      if (notification?.type === "comment.created") return;
+
+      toast.success(notification?.title || "New notification", { id: notificationId ? `notification-${notificationId}` : undefined });
       requestBrowserNotification(payload.notification?.title || "SupportDesk AI", payload.notification?.message || "");
       playNotificationSound();
     };

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import toast from "react-hot-toast";
 import { Lock } from "lucide-react";
 import Card from "../../../components/common/Card/Card.jsx";
 import { useAuth } from "../../../hooks/useAuth.js";
@@ -35,7 +34,6 @@ const AgentTicketConversation = ({ ticket }) => {
           }
         },
       }).unwrap();
-      toast.success("Reply sent");
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Could not send reply"));
       throw error;
