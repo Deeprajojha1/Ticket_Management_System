@@ -24,6 +24,12 @@ import AgentDashboard from "./features/agent/pages/AgentDashboard.jsx";
 import AgentTickets from "./features/agent/pages/AgentTickets.jsx";
 import AssignedTickets from "./features/agent/pages/AssignedTickets.jsx";
 import Analytics from "./features/agent/pages/Analytics.jsx";
+import { authApi } from "./app/services/authApi.js";
+import { dashboardApi } from "./features/agent/services/dashboardApi.js";
+import { ticketApi } from "./features/tickets/services/ticketApi.js";
+import { aiApi } from "./features/ai/services/aiApi.js";
+import { clearCredentials } from "./features/auth/authSlice.js";
+import { disconnectSocket } from "./socket/socket.js";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -38,6 +44,22 @@ const App = () => {
       dispatch(setAuthChecked());
     }
   }, [data, dispatch, isError, isSuccess]);
+
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      disconnectSocket();
+      dispatch(clearCredentials());
+      dispatch(authApi.util.resetApiState());
+      dispatch(ticketApi.util.resetApiState());
+      dispatch(dashboardApi.util.resetApiState());
+      dispatch(aiApi.util.resetApiState());
+      window.history.replaceState({ usr: null }, "", "/login");
+      window.dispatchEvent(new Event("popstate"));
+    };
+
+    window.addEventListener("supportdesk:auth-expired", handleAuthExpired);
+    return () => window.removeEventListener("supportdesk:auth-expired", handleAuthExpired);
+  }, [dispatch]);
 
   return (
     <Routes>

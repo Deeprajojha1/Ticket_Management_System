@@ -16,6 +16,10 @@ export const setAuthRefreshEnabled = (enabled) => {
   if (!enabled) refreshRequest = null;
 };
 
+const notifyAuthExpired = () => {
+  window.dispatchEvent(new CustomEvent("supportdesk:auth-expired"));
+};
+
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -42,6 +46,9 @@ axiosInstance.interceptors.response.use(
       await refreshRequest;
       return axiosInstance(originalRequest);
     } catch (refreshError) {
+      if (refreshError.response?.status === 401) {
+        notifyAuthExpired();
+      }
       return Promise.reject(refreshError);
     } finally {
       refreshRequest = null;

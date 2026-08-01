@@ -135,6 +135,12 @@ const SocketProvider = ({ children }) => {
         if (!isMounted) return;
 
         console.error("Socket token request failed:", error.response?.data?.message || error.message);
+        if (error.response?.status === 401) {
+          disconnectSocket();
+          setConnectionState("disconnected");
+          return;
+        }
+
         socket.io.opts.reconnection = true;
         socket.auth = {};
         socket.connect();
