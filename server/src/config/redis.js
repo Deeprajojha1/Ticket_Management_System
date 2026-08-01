@@ -1,10 +1,13 @@
 import Redis from "ioredis";
 
 let redisClient = null;
-const DEFAULT_REDIS_URL = "redis://localhost:6379";
 
 export const getRedisClient = () => {
-  const redisUrl = process.env.REDIS_URL || DEFAULT_REDIS_URL;
+  const redisUrl = process.env.REDIS_URL;
+
+  if (!redisUrl) {
+    return null;
+  }
 
   if (!redisClient) {
     redisClient = new Redis(redisUrl, {
@@ -25,6 +28,7 @@ export const connectRedis = async () => {
   const client = getRedisClient();
 
   if (!client) {
+    console.log("Redis disabled: REDIS_URL is not configured");
     return null;
   }
 
