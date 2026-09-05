@@ -26,9 +26,6 @@ jobs:
             server/package-lock.json
             client/package-lock.json
 
-      # ------------------------------
-      # BACKEND SETUP
-      # ------------------------------
       - name: Install backend dependencies
         working-directory: ./server
         run: npm ci
@@ -51,9 +48,6 @@ jobs:
           pm2 restart backend || pm2 start npm --name backend -- start
           pm2 save
 
-      # ------------------------------
-      # FRONTEND SETUP
-      # ------------------------------
       - name: Install frontend dependencies
         working-directory: ./client
         run: npm ci
@@ -74,5 +68,4 @@ jobs:
           sudo cp -r ./client/dist/. /var/www/html/
 
       - name: Reload Nginx
-        run: |
-          sudo systemctl reload nginx || sudo systemctl restart nginx
+        run: sudo systemctl reload nginx
