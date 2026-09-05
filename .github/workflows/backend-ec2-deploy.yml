@@ -69,8 +69,10 @@ jobs:
 
       - name: Deploy frontend to Nginx
         run: |
+          sudo mkdir -p /var/www/html
           sudo rm -rf /var/www/html/*
-          sudo cp -r ./client/dist/* /var/www/html/
+          sudo cp -r ./client/dist/. /var/www/html/
 
       - name: Reload Nginx
-        run: sudo systemctl reload nginx
+        run: |
+          sudo systemctl reload nginx || sudo systemctl restart nginx
