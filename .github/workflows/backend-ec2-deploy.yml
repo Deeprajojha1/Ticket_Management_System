@@ -1,0 +1,73 @@
+name: Deploy Fullstack App on EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    strategy:
+      matrix:
+        node-version: [22.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: |
+            server/package-lock.json
+            client/package-lock.json
+
+      # ------------------------------
+      # BACKEND SETUP
+      # ------------------------------
+      - name: Install backend dependencies
+        working-directory: ./server
+        run: npm ci
+
+      - name: Create backend .env file
+        working-directory: ./server
+        run: |
+          printf '%s\n' "${{ secrets.PROD_BACKEND_ENV }}" > .env
+
+      - name: Check backend syntax
+        working-directory: ./server
+        run: npm run check
+
+      - name: Start backend with PM2
+        working-directory: ./server
+        run: |
+          pm2 restart backend || pm2 start npm --name backend -- start
+          pm2 save
+
+      # ------------------------------
+      # FRONTEND SETUP
+      # ------------------------------
+      - name: Install frontend dependencies
+        working-directory: ./client
+        run: npm ci
+
+      - name: Create frontend .env file
+        working-directory: ./client
+        run: |
+          printf '%s\n' "${{ secrets.PROD_FRONTEND_ENV }}" > .env
+
+      - name: Build frontend
+        working-directory: ./client
+        run: npm run build
+
+      - name: Deploy frontend to Nginx
+        run: |
+          sudo rm -rf /var/www/html/*
+          sudo cp -r ./client/dist/* /var/www/html/
+
+      - name: Reload Nginx
+        run: sudo systemctl reload nginx
