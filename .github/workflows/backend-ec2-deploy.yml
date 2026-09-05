@@ -75,4 +75,8 @@ jobs:
 
       - name: Reload Nginx
         run: |
-          sudo systemctl reload nginx || sudo systemctl restart nginx
+          if systemctl list-unit-files | grep -q '^nginx\.service'; then
+            sudo systemctl reload nginx || sudo systemctl restart nginx
+          else
+            echo "nginx.service not found on runner, skipping reload."
+          fi
