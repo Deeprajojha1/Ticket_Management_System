@@ -6,32 +6,48 @@ import PriorityBadge from "./PriorityBadge.jsx";
 import TicketStatusBadge from "./TicketStatusBadge.jsx";
 
 const TicketCard = ({ onOpenChat, ticket }) => (
-  <Card className="p-4 transition hover:-translate-y-0.5 hover:shadow-md">
-    <div className="flex items-start justify-between gap-4">
-      <div className="min-w-0">
-        <p className="text-xs font-semibold uppercase text-slate-500">{ticket.ticketNumber}</p>
-        <h3 className="mt-1 truncate text-base font-semibold text-slate-950">{ticket.title}</h3>
-      </div>
+  <Card className="p-4 transition hover:-translate-y-0.5 hover:shadow-md sm:p-5">
+    <div className="flex items-start justify-between gap-3">
+      <p className="rounded bg-slate-100 px-1.5 py-1 text-xs font-semibold text-slate-600">{ticket.ticketNumber}</p>
       <div className="flex shrink-0 gap-2">
-        <Link className="focus-ring inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-blue-700" to={`/customer/tickets/${getTicketId(ticket)}?view=details`}>
+        <Link
+          aria-label="View ticket details"
+          className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-700 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+          to={`/customer/tickets/${getTicketId(ticket)}?view=details`}
+        >
           <ArrowUpRight className="h-4 w-4" />
-          Details
         </Link>
-        <button type="button" className="focus-ring inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-blue-700" onClick={() => onOpenChat?.(ticket)}>
+        <button
+          type="button"
+          aria-label="Open ticket chat"
+          className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
+          onClick={() => onOpenChat?.(ticket)}
+        >
           <MessageSquare className="h-4 w-4" />
-          Chat
         </button>
       </div>
     </div>
-    <div className="mt-4 flex flex-wrap gap-2">
+    <div className="mt-4 min-w-0">
+      <h3 className="truncate text-base font-semibold text-slate-950">{ticket.title}</h3>
+    </div>
+    <div className="mt-3 flex flex-wrap gap-2">
       <TicketStatusBadge status={ticket.status} />
       <PriorityBadge priority={ticket.priority} />
       <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">{ticket.category}</span>
     </div>
-    <div className="mt-4 grid gap-2 text-xs text-slate-500 sm:grid-cols-2">
-      <span>Assigned {ticket.assignedAgent?.fullName || "Unassigned"}</span>
-      <span>Created {formatDate(ticket.createdAt)}</span>
-      <span>Last activity {formatDate(ticket.lastActivity, { withTime: true })}</span>
+    <div className="mt-5 grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs">
+      <div className="grid grid-cols-[6.5rem_1fr] gap-2">
+        <span className="text-slate-500">Assigned to</span>
+        <span className="font-semibold text-slate-900">{ticket.assignedAgent?.fullName || "Unassigned"}</span>
+      </div>
+      <div className="grid grid-cols-[6.5rem_1fr] gap-2">
+        <span className="text-slate-500">Created</span>
+        <span className="font-semibold text-slate-900">{formatDate(ticket.createdAt)}</span>
+      </div>
+      <div className="grid grid-cols-[6.5rem_1fr] gap-2">
+        <span className="text-slate-500">Last activity</span>
+        <span className="font-semibold text-slate-900">{formatDate(ticket.lastActivity, { withTime: true })}</span>
+      </div>
     </div>
   </Card>
 );
