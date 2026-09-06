@@ -1,6 +1,6 @@
 import TicketRow, { AgentTicketCard } from "./TicketRow.jsx";
 
-const TicketTable = ({ tickets = [], onAssign, onOpen }) => (
+const TicketTable = ({ tickets = [], onAssign, onOpenChat, onOpenDetails }) => (
   <>
     <div className="hidden overflow-x-auto rounded-lg border border-slate-200 bg-white xl:block">
       <table className="min-w-full divide-y divide-slate-200">
@@ -14,7 +14,7 @@ const TicketTable = ({ tickets = [], onAssign, onOpen }) => (
           <col className="w-[12%]" />
           <col className="w-[8%]" />
           <col className="w-[10%]" />
-          <col className="w-[7%]" />
+          <col className="w-[14%]" />
         </colgroup>
         <thead className="bg-slate-50">
           <tr>
@@ -24,12 +24,28 @@ const TicketTable = ({ tickets = [], onAssign, onOpen }) => (
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-200 bg-white">
-          {tickets.map((ticket) => <TicketRow key={ticket._id} ticket={ticket} onAssign={onAssign} onOpen={onOpen} />)}
+          {tickets.map((ticket) => (
+            <TicketRow
+              key={ticket._id}
+              ticket={ticket}
+              onAssign={onAssign}
+              onOpenChat={onOpenChat}
+              onOpenDetails={onOpenDetails}
+            />
+          ))}
         </tbody>
       </table>
     </div>
     <div className="grid gap-3 xl:hidden">
-      {tickets.map((ticket) => <AgentTicketCard key={ticket._id} ticket={ticket} onAssign={onAssign} onOpen={onOpen} />)}
+      {tickets.map((ticket) => (
+        <AgentTicketCard
+          key={ticket._id}
+          ticket={ticket}
+          onAssign={onAssign}
+          onOpenChat={onOpenChat}
+          onOpenDetails={onOpenDetails}
+        />
+      ))}
     </div>
   </>
 );

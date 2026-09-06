@@ -6,13 +6,14 @@ import {
   MAX_ATTACHMENTS,
   MAX_ATTACHMENT_SIZE,
 } from "../constants.js";
-import AttachmentUploader from "./AttachmentUploader.jsx";
+import FileUploader from "../../../components/common/FileUploader/FileUploader.jsx";
 
 const CommentInput = ({ disabled = false, isLoading, onSubmit, onTyping, onStopTyping, uploadProgress = 0 }) => {
   const { control, getValues, handleSubmit, register, reset, setValue } = useForm({
     defaultValues: { message: "", attachments: [] },
   });
   const message = useWatch({ control, name: "message" });
+  const attachments = useWatch({ control, name: "attachments" }) || [];
   const messageField = register("message", { required: true, minLength: 1, maxLength: 2000 });
 
   const submit = async (values) => {
@@ -89,11 +90,11 @@ const CommentInput = ({ disabled = false, isLoading, onSubmit, onTyping, onStopT
             name="attachments"
             control={control}
             render={({ field }) => (
-              <AttachmentUploader
+              <FileUploader
                 files={field.value}
                 onChange={field.onChange}
                 disabled={disabled}
-                progress={isLoading ? uploadProgress : 0}
+                progress={isLoading && attachments.length ? uploadProgress : 0}
                 variant="compact"
               />
             )}

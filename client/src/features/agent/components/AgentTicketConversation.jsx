@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Lock } from "lucide-react";
 import toast from "react-hot-toast";
 import Card from "../../../components/common/Card/Card.jsx";
+import ConversationThread from "../../../components/common/ConversationThread/ConversationThread.jsx";
 import { useAuth } from "../../../hooks/useAuth.js";
 import CommentInput from "../../tickets/components/CommentInput.jsx";
-import CommentList from "../../tickets/components/CommentList.jsx";
 import TicketEmptyState from "../../tickets/components/TicketEmptyState.jsx";
 import { useCreateCommentMutation, useGetCommentsQuery } from "../../tickets/services/ticketApi.js";
 import { getApiErrorMessage } from "../../tickets/utils.js";
@@ -82,7 +82,7 @@ const AgentTicketConversation = ({ ticket }) => {
         ) : null}
       </div>
 
-      <CommentList
+      <ConversationThread
         className="flex-1"
         comments={comments}
         currentUserId={currentUserId}

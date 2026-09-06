@@ -1,4 +1,4 @@
-import { ExternalLink, UserPlus } from "lucide-react";
+import { ExternalLink, MessageSquare, UserPlus } from "lucide-react";
 import Button from "../../../components/common/Button/Button.jsx";
 import PriorityBadge from "../../tickets/components/PriorityBadge.jsx";
 import TicketStatusBadge from "../../tickets/components/TicketStatusBadge.jsx";
@@ -6,7 +6,7 @@ import { formatDate } from "../../tickets/utils.js";
 import PriorityDropdown from "./PriorityDropdown.jsx";
 import StatusDropdown from "./StatusDropdown.jsx";
 
-const TicketRow = ({ ticket, onAssign, onOpen }) => (
+const TicketRow = ({ ticket, onAssign, onOpenChat, onOpenDetails }) => (
   <tr className="hover:bg-slate-50">
     <td className="truncate px-3 py-4 text-sm font-semibold text-slate-900">{ticket.ticketNumber}</td>
     <td className="min-w-0 px-3 py-4">
@@ -28,16 +28,20 @@ const TicketRow = ({ ticket, onAssign, onOpen }) => (
             <span className="sr-only">Assign</span>
           </Button>
         ) : null}
-        <button className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50" onClick={() => onOpen(ticket)} title="Open">
+        <button className="focus-ring inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50" onClick={() => onOpenDetails(ticket)} title="Details">
           <ExternalLink className="h-3.5 w-3.5" />
-          <span className="sr-only">Open</span>
+          Details
+        </button>
+        <button className="focus-ring inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50" onClick={() => onOpenChat(ticket)} title="Chat">
+          <MessageSquare className="h-3.5 w-3.5" />
+          Chat
         </button>
       </div>
     </td>
   </tr>
 );
 
-export const AgentTicketCard = ({ ticket, onAssign, onOpen }) => (
+export const AgentTicketCard = ({ ticket, onAssign, onOpenChat, onOpenDetails }) => (
   <div className="rounded-lg border border-slate-200 bg-white p-4">
     <div className="flex items-start justify-between gap-3">
       <div className="min-w-0">
@@ -64,9 +68,13 @@ export const AgentTicketCard = ({ ticket, onAssign, onOpen }) => (
             Assign
           </Button>
         ) : null}
-        <button className="focus-ring inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700" onClick={() => onOpen(ticket)}>
+        <button className="focus-ring inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700" onClick={() => onOpenDetails(ticket)}>
           <ExternalLink className="h-4 w-4" />
-          Open
+          Details
+        </button>
+        <button className="focus-ring inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700" onClick={() => onOpenChat(ticket)}>
+          <MessageSquare className="h-4 w-4" />
+          Chat
         </button>
       </div>
     </div>

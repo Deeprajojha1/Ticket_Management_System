@@ -4,13 +4,16 @@ import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Plus, RefreshCw, Search } from "lucide-react";
 import Button from "../../../components/common/Button/Button.jsx";
 import Card from "../../../components/common/Card/Card.jsx";
+import Modal from "../../../components/common/Modal/Modal.jsx";
 import { SORT_OPTIONS, TICKET_CATEGORIES, TICKET_PRIORITIES, TICKET_STATUSES } from "../constants.js";
+import CustomerTicketConversation from "../components/CustomerTicketConversation.jsx";
 import TicketEmptyState from "../components/TicketEmptyState.jsx";
 import TicketSkeleton from "../components/TicketSkeleton.jsx";
 import TicketTable from "../components/TicketTable.jsx";
 import { useGetMyTicketsQuery } from "../services/ticketApi.js";
 
 const MyTickets = () => {
+  const [chatTarget, setChatTarget] = useState(null);
   const [filters, setFilters] = useState({
     page: 1,
     limit: 10,
@@ -75,7 +78,7 @@ const MyTickets = () => {
       </Card>
 
       {isFetching ? <TicketSkeleton rows={6} /> : null}
-      {!isFetching && tickets.length ? <TicketTable tickets={tickets} /> : null}
+      {!isFetching && tickets.length ? <TicketTable tickets={tickets} onOpenChat={setChatTarget} /> : null}
       {!isFetching && !tickets.length ? (
         <TicketEmptyState title="No tickets found" description="Try adjusting your filters or create a new support request." action={<Link to="/customer/tickets/create">Create Ticket</Link>} />
       ) : null}
@@ -99,6 +102,9 @@ const MyTickets = () => {
           </Button>
         </div>
       </div>
+      <Modal isOpen={Boolean(chatTarget)} onClose={() => setChatTarget(null)} title="Ticket Chat" size="xl">
+        {chatTarget ? <CustomerTicketConversation ticket={chatTarget} ticketId={chatTarget._id || chatTarget.id} /> : null}
+      </Modal>
     </motion.div>
   );
 };

@@ -20,6 +20,7 @@ import { useAllTicketsQuery, useAssignTicketMutation, useAssignedTicketsQuery } 
 const AssignedTickets = () => {
   const [filters, setFilters] = useState(DEFAULT_AGENT_FILTERS);
   const [assignTarget, setAssignTarget] = useState(null);
+  const [chatTarget, setChatTarget] = useState(null);
   const [detailsTarget, setDetailsTarget] = useState(null);
   const queryParams = useMemo(() => Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== "")), [filters]);
   const assignedQuery = useAssignedTicketsQuery(queryParams, { pollingInterval: 60000 });
@@ -64,7 +65,14 @@ const AssignedTickets = () => {
       ) : null}
       <TicketFilters filters={filters} onChange={setFilters} />
       {isFetching ? <TicketSkeleton rows={6} /> : null}
-      {!isFetching && tickets.length ? <TicketTable tickets={tickets} onAssign={setAssignTarget} onOpen={setDetailsTarget} /> : null}
+      {!isFetching && tickets.length ? (
+        <TicketTable
+          tickets={tickets}
+          onAssign={setAssignTarget}
+          onOpenChat={setChatTarget}
+          onOpenDetails={setDetailsTarget}
+        />
+      ) : null}
       {!isFetching && !tickets.length ? <TicketEmptyState title="No tickets available" description="Assigned or unassigned tickets will appear here when customers create them." /> : null}
       <Pagination pagination={pagination} onPageChange={(page) => setFilters((current) => ({ ...current, page }))} />
       <AssignAgentModal isOpen={Boolean(assignTarget)} ticket={assignTarget} onClose={() => setAssignTarget(null)} onConfirm={confirmAssign} isLoading={isAssigning} />
@@ -72,9 +80,11 @@ const AssignedTickets = () => {
         {detailsTarget ? (
           <div className="max-h-[75vh] space-y-4 overflow-y-auto pr-1">
             <TicketDetailsCard ticket={detailsTarget} />
-            <AgentTicketConversation ticket={detailsTarget} />
           </div>
         ) : null}
+      </Modal>
+      <Modal isOpen={Boolean(chatTarget)} onClose={() => setChatTarget(null)} title="Ticket Chat" size="xl">
+        {chatTarget ? <AgentTicketConversation ticket={chatTarget} /> : null}
       </Modal>
     </div>
   );

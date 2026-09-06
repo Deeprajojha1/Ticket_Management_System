@@ -1,20 +1,27 @@
 import { Link } from "../../../lib/router.jsx";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, MessageSquare } from "lucide-react";
 import Card from "../../../components/common/Card/Card.jsx";
 import { formatDate, getTicketId } from "../utils.js";
 import PriorityBadge from "./PriorityBadge.jsx";
 import TicketStatusBadge from "./TicketStatusBadge.jsx";
 
-const TicketCard = ({ ticket }) => (
+const TicketCard = ({ onOpenChat, ticket }) => (
   <Card className="p-4 transition hover:-translate-y-0.5 hover:shadow-md">
     <div className="flex items-start justify-between gap-4">
       <div className="min-w-0">
         <p className="text-xs font-semibold uppercase text-slate-500">{ticket.ticketNumber}</p>
         <h3 className="mt-1 truncate text-base font-semibold text-slate-950">{ticket.title}</h3>
       </div>
-      <Link className="focus-ring rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-blue-700" to={`/customer/tickets/${getTicketId(ticket)}`}>
-        <ArrowUpRight className="h-4 w-4" />
-      </Link>
+      <div className="flex shrink-0 gap-2">
+        <Link className="focus-ring inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-blue-700" to={`/customer/tickets/${getTicketId(ticket)}?view=details`}>
+          <ArrowUpRight className="h-4 w-4" />
+          Details
+        </Link>
+        <button type="button" className="focus-ring inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-blue-700" onClick={() => onOpenChat?.(ticket)}>
+          <MessageSquare className="h-4 w-4" />
+          Chat
+        </button>
+      </div>
     </div>
     <div className="mt-4 flex flex-wrap gap-2">
       <TicketStatusBadge status={ticket.status} />

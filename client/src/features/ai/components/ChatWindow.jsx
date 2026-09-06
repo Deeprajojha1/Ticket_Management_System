@@ -139,6 +139,7 @@ const ChatWindow = ({ compact = false, onClose }) => {
   const [localMessages, setLocalMessages] = useState([]);
   const [pendingMessages, setPendingMessages] = useState([]);
   const [failedMessages, setFailedMessages] = useState([]);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const history = useHistoryQuery({ page: 1, limit: 30 });
   const conversation = useConversationQuery(conversationId, { skip: !conversationId });
   const [sendMessage, { isLoading: isSending }] = useSendMessageMutation();
@@ -168,13 +169,24 @@ const ChatWindow = ({ compact = false, onClose }) => {
   }, [conversationId]);
 
   const send = async ({ message, attachments = [], retryId } = {}) => {
+    const hasAttachments = attachments.length > 0;
     const pendingMessage = asMessage("user", message, { status: "sending" });
     if (retryId) setFailedMessages((current) => current.filter((item) => item._id !== retryId));
     setPendingMessages((current) => [...current, pendingMessage]);
+    setUploadProgress(0);
     setDraft("");
 
     try {
-      const response = await sendMessage({ message, conversationId, attachments }).unwrap();
+      const response = await sendMessage({
+        message,
+        conversationId,
+        attachments,
+        onUploadProgress: hasAttachments
+          ? (event) => {
+            if (event.total) setUploadProgress(Math.round((event.loaded * 100) / event.total));
+          }
+          : undefined,
+      }).unwrap();
       const reply = response?.data?.reply || "I could not generate a response.";
       const nextConversationId = response?.data?.conversationId;
       if (nextConversationId) setConversationId(nextConversationId);
@@ -195,6 +207,8 @@ const ChatWindow = ({ compact = false, onClose }) => {
         }),
       ]);
       toast.error(errorMessage);
+    } finally {
+      setUploadProgress(0);
     }
   };
 
@@ -215,6 +229,7 @@ const ChatWindow = ({ compact = false, onClose }) => {
     setLocalMessages([]);
     setPendingMessages([]);
     setFailedMessages([]);
+    setUploadProgress(0);
     setDraft("");
     setIsHistoryOpen(false);
   };
@@ -297,6 +312,7 @@ const ChatWindow = ({ compact = false, onClose }) => {
           onChange={setDraft}
           onSend={send}
           onTranscribe={transcribeAudio}
+          uploadProgress={uploadProgress}
           value={draft}
         />
       </div>

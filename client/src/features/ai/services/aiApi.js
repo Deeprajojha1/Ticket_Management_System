@@ -3,9 +3,9 @@ import axiosInstance from "../../../utils/axiosInstance.js";
 
 const axiosBaseQuery =
   () =>
-  async ({ url, method, data, params, headers }) => {
+  async ({ url, method, data, params, headers, onUploadProgress }) => {
     try {
-      const result = await axiosInstance({ url, method, data, params, headers });
+      const result = await axiosInstance({ url, method, data, params, headers, onUploadProgress });
       return { data: result.data };
     } catch (axiosError) {
       return {
@@ -43,6 +43,7 @@ export const aiApi = createApi({
         method: "POST",
         data: toChatFormData(payload),
         headers: { "Content-Type": "multipart/form-data" },
+        onUploadProgress: payload.onUploadProgress,
       }),
       invalidatesTags: (_result, _error, { conversationId }) => [
         "AIConversations",

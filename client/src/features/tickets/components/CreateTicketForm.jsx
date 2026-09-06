@@ -8,7 +8,7 @@ import Button from "../../../components/common/Button/Button.jsx";
 import Card from "../../../components/common/Card/Card.jsx";
 import Input from "../../../components/common/Input/Input.jsx";
 import { TICKET_CATEGORIES, TICKET_PRIORITIES } from "../constants.js";
-import AttachmentUploader from "./AttachmentUploader.jsx";
+import FileUploader from "../../../components/common/FileUploader/FileUploader.jsx";
 
 const schema = z.object({
   title: z.string().min(10, "Title must be at least 10 characters").max(120, "Title cannot exceed 120 characters"),
@@ -80,7 +80,7 @@ const CreateTicketForm = ({ isLoading, onSubmit, uploadProgress = 0 }) => {
           name="attachments"
           control={control}
           render={({ field }) => (
-            <AttachmentUploader files={field.value} onChange={field.onChange} progress={uploadProgress} />
+            <FileUploader files={field.value} onChange={field.onChange} progress={uploadProgress} />
           )}
         />
 
