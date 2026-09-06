@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import TicketEmptyState from "./TicketEmptyState.jsx";
 import TicketComment from "./TicketComment.jsx";
 
-const CommentList = ({ className = "", comments = [], currentUserId, ticketId }) => {
+const CommentList = ({ className = "", comments = [], currentUserId, onRetryComment, ticketId }) => {
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -22,7 +22,13 @@ const CommentList = ({ className = "", comments = [], currentUserId, ticketId })
       ) : (
         <div className="space-y-4">
           {comments.map((comment) => (
-            <TicketComment key={comment._id} comment={comment} currentUserId={currentUserId} ticketId={ticketId} />
+            <TicketComment
+              key={comment._id}
+              comment={comment}
+              currentUserId={currentUserId}
+              onRetry={comment.retryPayload ? () => onRetryComment?.(comment) : undefined}
+              ticketId={ticketId}
+            />
           ))}
         </div>
       )}

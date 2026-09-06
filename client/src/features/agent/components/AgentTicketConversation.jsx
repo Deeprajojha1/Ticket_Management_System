@@ -14,6 +14,7 @@ const getEntityId = (value) => value?._id || value?.id || value?.toString?.();
 const AgentTicketConversation = ({ ticket }) => {
   const { user } = useAuth();
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [failedComments, setFailedComments] = useState([]);
   const ticketId = getEntityId(ticket);
   const currentUserId = getEntityId(user);
   const assignedAgentId = getEntityId(ticket?.assignedAgent);
@@ -21,10 +22,11 @@ const AgentTicketConversation = ({ ticket }) => {
   const canReply = assignedAgentId && assignedAgentId === currentUserId && !isConversationLocked;
   const { data, isFetching } = useGetCommentsQuery({ ticketId, page: 1, limit: 50, sort: "oldest" }, { skip: !ticketId });
   const [createComment, { isLoading: isSending }] = useCreateCommentMutation();
-  const comments = data?.data?.comments || [];
+  const comments = [...(data?.data?.comments || []), ...failedComments];
 
-  const handleComment = async (values) => {
+  const handleComment = async (values, retryId) => {
     setUploadProgress(0);
+    if (retryId) setFailedComments((current) => current.filter((comment) => comment._id !== retryId));
     try {
       await createComment({
         ticketId,
@@ -36,12 +38,28 @@ const AgentTicketConversation = ({ ticket }) => {
         },
       }).unwrap();
     } catch (error) {
-      toast.error(getApiErrorMessage(error, "Could not send reply"));
+      const errorMessage = getApiErrorMessage(error, "Could not send reply");
+      setFailedComments((current) => [
+        ...current,
+        {
+          _id: `failed-comment-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          createdAt: new Date().toISOString(),
+          message: values.message,
+          attachments: [],
+          status: "failed",
+          errorMessage,
+          retryPayload: values,
+          user,
+        },
+      ]);
+      toast.error(errorMessage);
       throw error;
     } finally {
       setUploadProgress(0);
     }
   };
+
+  const retryComment = (comment) => handleComment(comment.retryPayload, comment._id);
 
   return (
     <Card className="flex max-h-[min(720px,calc(100vh-120px))] min-h-[520px] flex-col p-4 sm:p-5">
@@ -64,7 +82,13 @@ const AgentTicketConversation = ({ ticket }) => {
         ) : null}
       </div>
 
-      <CommentList className="flex-1" comments={comments} currentUserId={currentUserId} ticketId={ticketId} />
+      <CommentList
+        className="flex-1"
+        comments={comments}
+        currentUserId={currentUserId}
+        onRetryComment={retryComment}
+        ticketId={ticketId}
+      />
 
       <div className="mt-4 shrink-0 border-t border-slate-200 pt-4">
         {canReply ? (

@@ -8,6 +8,7 @@
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
     "check": "node --check src/server.js",
+    "check:ai": "node src/ai-provider-check.js",
     "smoke": "node src/smoke-test.js",
     "smoke:socket": "node src/socket-smoke-test.js"
   },

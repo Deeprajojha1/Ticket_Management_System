@@ -2,7 +2,7 @@ import { Copy, Pause, RotateCcw, ThumbsDown, ThumbsUp, Volume2 } from "lucide-re
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-const MessageActions = ({ content, isAssistant, speech }) => {
+const MessageActions = ({ content, isAssistant, onRetry, speech }) => {
   const [feedback, setFeedback] = useState(null);
 
   const copy = async () => {
@@ -24,6 +24,16 @@ const MessageActions = ({ content, isAssistant, speech }) => {
       <button className="focus-ring rounded-md p-1.5 hover:bg-slate-100" type="button" onClick={copy} aria-label="Copy message">
         <Copy className="h-3.5 w-3.5" />
       </button>
+      {onRetry ? (
+        <button
+          className="focus-ring inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50"
+          type="button"
+          onClick={onRetry}
+        >
+          <RotateCcw className="h-3.5 w-3.5" />
+          Resend
+        </button>
+      ) : null}
       {isAssistant ? (
         <>
           <button

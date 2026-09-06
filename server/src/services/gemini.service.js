@@ -4,18 +4,38 @@ import { formatAIReply } from "../utils/aiResponseFormatter.js";
 import { SYSTEM_PROMPT } from "../utils/promptTemplates.js";
 
 const DEPRECATED_MODEL_ALIASES = new Set(["gemini-1.5-flash", "gemini-1.5-pro"]);
-const configuredModel = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+const configuredModel = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
 const GEMINI_MODEL = DEPRECATED_MODEL_ALIASES.has(configuredModel)
-  ? "gemini-2.0-flash"
+  ? "gemini-3.5-flash-lite"
   : configuredModel;
-const FALLBACK_MODELS = (process.env.GEMINI_FALLBACK_MODELS || "gemini-2.0-flash-lite")
+const FALLBACK_MODELS = (process.env.GEMINI_FALLBACK_MODELS || "gemini-3.5-flash-lite")
   .split(",")
   .map((model) => model.trim())
   .filter(Boolean);
 const GEMINI_TIMEOUT_MS = 30000;
-const GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
+const GROQ_MODEL = process.env.GROQ_MODEL || "groq/compound-mini";
 const GROQ_TIMEOUT_MS = 30000;
 const RETRYABLE_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
+
+const getEnv = (...names) => {
+  for (const name of names) {
+    const value = process.env[name]?.trim();
+    if (value) return value;
+  }
+
+  return "";
+};
+
+const getProviderErrorDetails = (provider, error) => ({
+  provider,
+  status: error.response?.status || null,
+  code: error.code || null,
+  message:
+    error.response?.data?.error?.message ||
+    error.response?.data?.message ||
+    error.message ||
+    "Unknown provider error",
+});
 
 const sleep = (ms) => new Promise((resolve) => {
   setTimeout(resolve, ms);
@@ -32,7 +52,7 @@ const getRetryDelayMs = (error, attempt) => {
 
 const buildModelList = () => [...new Set([GEMINI_MODEL, ...FALLBACK_MODELS])];
 
-const requestGemini = ({ prompt, systemPrompt, model }) =>
+const requestGemini = ({ prompt, systemPrompt, model, apiKey }) =>
   axios.post(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
     {
@@ -51,7 +71,7 @@ const requestGemini = ({ prompt, systemPrompt, model }) =>
       },
     },
     {
-      params: { key: process.env.GEMINI_API_KEY },
+      params: { key: apiKey },
       timeout: GEMINI_TIMEOUT_MS,
     },
   );
@@ -70,21 +90,22 @@ const requestGroq = ({ prompt, systemPrompt }) =>
     },
     {
       headers: {
-        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        Authorization: `Bearer ${getEnv("GROQ_API_KEY")}`,
         "Content-Type": "application/json",
       },
       timeout: GROQ_TIMEOUT_MS,
     },
   );
 
-const generateGroqReply = async ({ prompt, systemPrompt, startedAt }) => {
-  if (!process.env.GROQ_API_KEY) {
-    throw new ApiError(502, "Gemini failed and GROQ_API_KEY is not configured");
+const generateGroqReply = async ({ prompt, systemPrompt, startedAt, previousErrors = [] }) => {
+  if (!getEnv("GROQ_API_KEY")) {
+    throw new ApiError(502, "Gemini failed and GROQ_API_KEY is not configured", previousErrors);
   }
 
   try {
     const response = await requestGroq({ prompt, systemPrompt });
-    const text = response.data?.choices?.[0]?.message?.content;
+    const message = response.data?.choices?.[0]?.message;
+    const text = message?.content || message?.reasoning;
 
     console.log(`Groq fallback response time: ${Date.now() - startedAt}ms`);
     console.log(`Groq model used: ${response.data?.model || GROQ_MODEL}`);
@@ -105,18 +126,30 @@ const generateGroqReply = async ({ prompt, systemPrompt, startedAt }) => {
     console.error(`Groq fallback failed: status=${status || "unknown"} model=${GROQ_MODEL} message=${groqMessage}`);
 
     if (error.code === "ECONNABORTED") {
-      throw new ApiError(504, "Gemini failed and Groq fallback timed out");
+      throw new ApiError(504, "Gemini failed and Groq fallback timed out", [
+        ...previousErrors,
+        getProviderErrorDetails("groq", error),
+      ]);
     }
 
     if (status === 401 || status === 403) {
-      throw new ApiError(502, "Gemini failed and Groq API key is invalid or not authorized");
+      throw new ApiError(502, "Gemini failed and Groq API key is invalid or not authorized", [
+        ...previousErrors,
+        getProviderErrorDetails("groq", error),
+      ]);
     }
 
     if (status === 429) {
-      throw new ApiError(429, "Both Gemini and Groq quotas are temporarily exhausted");
+      throw new ApiError(429, "Both Gemini and Groq quotas are temporarily exhausted", [
+        ...previousErrors,
+        getProviderErrorDetails("groq", error),
+      ]);
     }
 
-    throw new ApiError(502, "Gemini failed and Groq fallback failed");
+    throw new ApiError(502, "Gemini failed and Groq fallback failed", [
+      ...previousErrors,
+      getProviderErrorDetails("groq", error),
+    ]);
   }
 };
 
@@ -125,7 +158,9 @@ export const generateGeminiReply = async ({ prompt, systemPrompt = SYSTEM_PROMPT
   let lastError;
 
   try {
-    if (!process.env.GEMINI_API_KEY) {
+    const geminiApiKey = getEnv("GEMINI_API_KEY", "GOOGLE_GEMINI_API_KEY", "GOOGLE_API_KEY");
+
+    if (!geminiApiKey) {
       return generateGroqReply({ prompt, systemPrompt, startedAt });
     }
 
@@ -135,7 +170,7 @@ export const generateGeminiReply = async ({ prompt, systemPrompt = SYSTEM_PROMPT
     for (const model of buildModelList()) {
       for (let attempt = 0; attempt < 3; attempt += 1) {
         try {
-          response = await requestGemini({ prompt, systemPrompt, model });
+          response = await requestGemini({ prompt, systemPrompt, model, apiKey: geminiApiKey });
           activeModel = model;
           break;
         } catch (error) {
@@ -183,12 +218,22 @@ export const generateGeminiReply = async ({ prompt, systemPrompt = SYSTEM_PROMPT
 
     if (error.code === "ECONNABORTED") {
       console.warn("Gemini timed out. Trying Groq fallback.");
-      return generateGroqReply({ prompt, systemPrompt, startedAt });
+      return generateGroqReply({
+        prompt,
+        systemPrompt,
+        startedAt,
+        previousErrors: [getProviderErrorDetails("gemini", error)],
+      });
     }
 
     if (status === 429) {
       console.warn("Gemini quota exhausted. Trying Groq fallback.");
-      return generateGroqReply({ prompt, systemPrompt, startedAt });
+      return generateGroqReply({
+        prompt,
+        systemPrompt,
+        startedAt,
+        previousErrors: [getProviderErrorDetails("gemini", error)],
+      });
     }
 
     const geminiMessage = error.response?.data?.error?.message;
@@ -198,14 +243,29 @@ export const generateGeminiReply = async ({ prompt, systemPrompt = SYSTEM_PROMPT
 
     if (status === 400 || status === 404) {
       console.warn(`Gemini model "${GEMINI_MODEL}" unavailable. Trying Groq fallback.`);
-      return generateGroqReply({ prompt, systemPrompt, startedAt });
+      return generateGroqReply({
+        prompt,
+        systemPrompt,
+        startedAt,
+        previousErrors: [getProviderErrorDetails("gemini", error)],
+      });
     }
 
     if (status === 401 || status === 403) {
       console.warn("Gemini API key invalid or unauthorized. Trying Groq fallback.");
-      return generateGroqReply({ prompt, systemPrompt, startedAt });
+      return generateGroqReply({
+        prompt,
+        systemPrompt,
+        startedAt,
+        previousErrors: [getProviderErrorDetails("gemini", error)],
+      });
     }
 
-    return generateGroqReply({ prompt, systemPrompt, startedAt });
+    return generateGroqReply({
+      prompt,
+      systemPrompt,
+      startedAt,
+      previousErrors: [getProviderErrorDetails("gemini", error)],
+    });
   }
 };

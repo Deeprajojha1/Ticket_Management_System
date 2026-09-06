@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useChatScroll } from "../hooks/useChatScroll.js";
 import { useSpeechPlayer } from "../hooks/useSpeechPlayer.js";
@@ -25,6 +25,28 @@ const asMessage = (role, content, extras = {}) => ({
   createdAt: new Date().toISOString(),
   ...extras,
 });
+
+const ACTIVE_CONVERSATION_KEY = "supportdesk:active-ai-conversation";
+
+const getStoredConversationId = () => {
+  try {
+    return localStorage.getItem(ACTIVE_CONVERSATION_KEY);
+  } catch {
+    return null;
+  }
+};
+
+const storeConversationId = (conversationId) => {
+  try {
+    if (conversationId) {
+      localStorage.setItem(ACTIVE_CONVERSATION_KEY, conversationId);
+    } else {
+      localStorage.removeItem(ACTIVE_CONVERSATION_KEY);
+    }
+  } catch {
+    // Storage can be unavailable in private windows.
+  }
+};
 
 const escapeHtml = (value = "") =>
   value
@@ -111,10 +133,12 @@ const exportPdf = (messages) => {
 };
 
 const ChatWindow = ({ compact = false, onClose }) => {
-  const [conversationId, setConversationId] = useState(null);
+  const [conversationId, setConversationId] = useState(getStoredConversationId);
   const [draft, setDraft] = useState("");
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [localMessages, setLocalMessages] = useState([]);
+  const [pendingMessages, setPendingMessages] = useState([]);
+  const [failedMessages, setFailedMessages] = useState([]);
   const history = useHistoryQuery({ page: 1, limit: 30 });
   const conversation = useConversationQuery(conversationId, { skip: !conversationId });
   const [sendMessage, { isLoading: isSending }] = useSendMessageMutation();
@@ -123,15 +147,30 @@ const ChatWindow = ({ compact = false, onClose }) => {
   const speech = useSpeechPlayer();
 
   const serverMessages = conversation.data?.data?.messages || [];
-  const messages = conversationId ? serverMessages : localMessages;
+  const savedMessages = conversationId ? serverMessages : localMessages;
+  const visiblePendingMessages = pendingMessages.filter(
+    (pending) => !savedMessages.some((message) => message.role === pending.role && message.content === pending.content),
+  );
+  const messages = [...savedMessages, ...visiblePendingMessages, ...failedMessages];
   const bottomRef = useChatScroll(messages.length + Number(isSending));
   const conversations = history.data?.data?.conversations || [];
 
   const displayMessages = useMemo(() => messages.filter((message) => message.role !== "system"), [messages]);
 
-  const send = async ({ message, attachments = [] }) => {
-    const userMessage = asMessage("user", message);
-    if (!conversationId) setLocalMessages((current) => [...current, userMessage]);
+  useEffect(() => {
+    if (!conversationId && conversations[0]?._id) {
+      setConversationId(conversations[0]._id);
+    }
+  }, [conversationId, conversations]);
+
+  useEffect(() => {
+    storeConversationId(conversationId);
+  }, [conversationId]);
+
+  const send = async ({ message, attachments = [], retryId } = {}) => {
+    const pendingMessage = asMessage("user", message, { status: "sending" });
+    if (retryId) setFailedMessages((current) => current.filter((item) => item._id !== retryId));
+    setPendingMessages((current) => [...current, pendingMessage]);
     setDraft("");
 
     try {
@@ -139,10 +178,23 @@ const ChatWindow = ({ compact = false, onClose }) => {
       const reply = response?.data?.reply || "I could not generate a response.";
       const nextConversationId = response?.data?.conversationId;
       if (nextConversationId) setConversationId(nextConversationId);
-      if (!conversationId) setLocalMessages((current) => [...current, asMessage("assistant", reply)]);
+      setPendingMessages((current) => current.map((item) => (
+        item._id === pendingMessage._id ? { ...item, status: "sent" } : item
+      )));
+      if (!conversationId) setLocalMessages((current) => [...current, asMessage("user", message), asMessage("assistant", reply)]);
       toast.success("AI response ready");
     } catch (error) {
-      toast.error(getApiErrorMessage(error, "AI request failed"));
+      const errorMessage = getApiErrorMessage(error, "AI request failed");
+      setPendingMessages((current) => current.filter((item) => item._id !== pendingMessage._id));
+      setFailedMessages((current) => [
+        ...current,
+        asMessage("user", message, {
+          status: "failed",
+          errorMessage,
+          retryPayload: { message, attachments },
+        }),
+      ]);
+      toast.error(errorMessage);
     }
   };
 
@@ -159,7 +211,10 @@ const ChatWindow = ({ compact = false, onClose }) => {
 
   const startNew = () => {
     setConversationId(null);
+    storeConversationId(null);
     setLocalMessages([]);
+    setPendingMessages([]);
+    setFailedMessages([]);
     setDraft("");
     setIsHistoryOpen(false);
   };
@@ -168,6 +223,7 @@ const ChatWindow = ({ compact = false, onClose }) => {
     try {
       await deleteConversation(item._id).unwrap();
       if (conversationId === item._id) startNew();
+      if (conversationId !== item._id) storeConversationId(conversationId);
       toast.success("Conversation deleted");
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Could not delete conversation"));
@@ -220,7 +276,12 @@ const ChatWindow = ({ compact = false, onClose }) => {
           {!conversation.isFetching && !displayMessages.length ? <EmptyConversation onSelect={(question) => send({ message: question })} /> : null}
           <div className="space-y-5">
             {displayMessages.map((message) => (
-              <ChatMessage key={message._id} message={message} speech={speech} />
+              <ChatMessage
+                key={message._id}
+                message={message}
+                onRetry={message.retryPayload ? () => send({ ...message.retryPayload, retryId: message._id }) : undefined}
+                speech={speech}
+              />
             ))}
             {isSending ? (
               <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">

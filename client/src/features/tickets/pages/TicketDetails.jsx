@@ -20,16 +20,18 @@ const TicketDetails = () => {
   const { ticketId } = useParams();
   const { user } = useAuth();
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [failedComments, setFailedComments] = useState([]);
   const { data, isLoading, isError, refetch } = useGetTicketQuery(ticketId);
   const { data: commentsData, isFetching: isCommentsFetching } = useGetCommentsQuery({ ticketId, page: 1, limit: 50, sort: "oldest" });
   const [createComment, { isLoading: isSending }] = useCreateCommentMutation();
   const { emitTyping, stopTyping, typingUser } = useTyping(ticketId);
   const ticket = data?.data?.ticket;
-  const comments = commentsData?.data?.comments || [];
+  const comments = [...(commentsData?.data?.comments || []), ...failedComments];
   const isConversationLocked = ["Resolved", "Closed"].includes(ticket?.status);
 
-  const handleComment = async (values) => {
+  const handleComment = async (values, retryId) => {
     setUploadProgress(0);
+    if (retryId) setFailedComments((current) => current.filter((comment) => comment._id !== retryId));
     try {
       await createComment({
         ticketId,
@@ -39,12 +41,28 @@ const TicketDetails = () => {
         },
       }).unwrap();
     } catch (error) {
-      toast.error(getApiErrorMessage(error, "Could not add comment"));
+      const errorMessage = getApiErrorMessage(error, "Could not add comment");
+      setFailedComments((current) => [
+        ...current,
+        {
+          _id: `failed-comment-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          createdAt: new Date().toISOString(),
+          message: values.message,
+          attachments: [],
+          status: "failed",
+          errorMessage,
+          retryPayload: values,
+          user,
+        },
+      ]);
+      toast.error(errorMessage);
       throw error;
     } finally {
       setUploadProgress(0);
     }
   };
+
+  const retryComment = (comment) => handleComment(comment.retryPayload, comment._id);
 
   if (isLoading) return <Loader label="Loading ticket" />;
 
@@ -74,7 +92,13 @@ const TicketDetails = () => {
               <h2 className="text-base font-semibold text-slate-950">Comments</h2>
               {isCommentsFetching ? <span className="text-xs text-slate-500">Refreshing...</span> : null}
             </div>
-            <CommentList className="flex-1" comments={comments} currentUserId={user?._id || user?.id} ticketId={ticketId} />
+            <CommentList
+              className="flex-1"
+              comments={comments}
+              currentUserId={user?._id || user?.id}
+              onRetryComment={retryComment}
+              ticketId={ticketId}
+            />
             <div className="my-3 shrink-0">
               <TypingIndicator user={typingUser} />
             </div>
