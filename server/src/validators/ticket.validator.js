@@ -92,6 +92,8 @@ export const ticketQueryValidator = [
   query("category").optional().isIn(Object.values(TICKET_CATEGORIES)).withMessage("Category is invalid"),
   query("assignedAgent").optional().isMongoId().withMessage("assignedAgent must be a valid user id"),
   query("createdBy").optional().isMongoId().withMessage("createdBy must be a valid user id"),
+  query("startDate").optional().isISO8601().withMessage("startDate must be a valid ISO date"),
+  query("endDate").optional().isISO8601().withMessage("endDate must be a valid ISO date"),
   query("sort").optional().isIn(["newest", "oldest", "priority", "status", "lastActivity"]).withMessage("Sort is invalid"),
   query("search").optional().trim().isLength({ max: 120 }).withMessage("Search cannot exceed 120 characters"),
 ];

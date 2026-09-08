@@ -1,17 +1,21 @@
+import { useState } from "react";
 import { Link } from "../../../lib/router.jsx";
 import { motion } from "framer-motion";
 import { AlertTriangle, ArrowRight, CheckCircle2, Clock3, ListChecks, Plus, RefreshCw, Ticket } from "lucide-react";
 import Button from "../../../components/common/Button/Button.jsx";
 import Card from "../../../components/common/Card/Card.jsx";
+import Modal from "../../../components/common/Modal/Modal.jsx";
 import { useAuth } from "../../../hooks/useAuth.js";
 import { useGetMyTicketsQuery } from "../services/ticketApi.js";
 import { getTicketId } from "../utils.js";
+import CustomerTicketConversation from "../components/CustomerTicketConversation.jsx";
 import TicketCard from "../components/TicketCard.jsx";
 import TicketEmptyState from "../components/TicketEmptyState.jsx";
 import TicketSkeleton from "../components/TicketSkeleton.jsx";
 
 const CustomerDashboard = () => {
   const { user } = useAuth();
+  const [chatTarget, setChatTarget] = useState(null);
   const { data, isFetching, refetch } = useGetMyTicketsQuery({ page: 1, limit: 100, sort: "newest" });
   const tickets = data?.data?.tickets || [];
   const recentTickets = tickets.slice(0, 5);
@@ -60,7 +64,7 @@ const CustomerDashboard = () => {
         {isFetching ? <TicketSkeleton rows={3} /> : null}
         {!isFetching && recentTickets.length ? (
           <div className="grid gap-3 lg:grid-cols-2">
-            {recentTickets.map((ticket) => <TicketCard key={getTicketId(ticket)} ticket={ticket} />)}
+            {recentTickets.map((ticket) => <TicketCard key={getTicketId(ticket)} ticket={ticket} onOpenChat={setChatTarget} />)}
           </div>
         ) : null}
         {!isFetching && !recentTickets.length ? (
@@ -77,6 +81,9 @@ const CustomerDashboard = () => {
           </Button>
         ) : null}
       </section>
+      <Modal isOpen={Boolean(chatTarget)} onClose={() => setChatTarget(null)} title="Ticket Chat" size="xl">
+        {chatTarget ? <CustomerTicketConversation ticket={chatTarget} ticketId={getTicketId(chatTarget)} /> : null}
+      </Modal>
     </motion.div>
   );
 };

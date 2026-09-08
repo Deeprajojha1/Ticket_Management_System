@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Lock } from "lucide-react";
 import toast from "react-hot-toast";
+import { ClipLoader } from "react-spinners";
 import Card from "../../../components/common/Card/Card.jsx";
 import ConversationThread from "../../../components/common/ConversationThread/ConversationThread.jsx";
 import { useAuth } from "../../../hooks/useAuth.js";
@@ -20,9 +21,10 @@ const AgentTicketConversation = ({ ticket }) => {
   const assignedAgentId = getEntityId(ticket?.assignedAgent);
   const isConversationLocked = ["Resolved", "Closed"].includes(ticket?.status);
   const canReply = assignedAgentId && assignedAgentId === currentUserId && !isConversationLocked;
-  const { data, isFetching } = useGetCommentsQuery({ ticketId, page: 1, limit: 50, sort: "oldest" }, { skip: !ticketId });
+  const { data, isFetching, isLoading } = useGetCommentsQuery({ ticketId, page: 1, limit: 50, sort: "oldest" }, { skip: !ticketId });
   const [createComment, { isLoading: isSending }] = useCreateCommentMutation();
   const comments = [...(data?.data?.comments || []), ...failedComments];
+  const showInitialLoader = isLoading && !comments.length;
 
   const handleComment = async (values, retryId) => {
     setUploadProgress(0);
@@ -67,7 +69,7 @@ const AgentTicketConversation = ({ ticket }) => {
         <div>
           <h3 className="text-sm font-semibold text-slate-950">Conversation</h3>
           <p className="text-xs text-slate-500">
-            {isFetching ? "Refreshing messages..." : `${comments.length} message${comments.length === 1 ? "" : "s"}`}
+            {showInitialLoader ? "Loading messages..." : isFetching ? "Refreshing messages..." : `${comments.length} message${comments.length === 1 ? "" : "s"}`}
           </p>
         </div>
         {isConversationLocked ? (
@@ -82,13 +84,22 @@ const AgentTicketConversation = ({ ticket }) => {
         ) : null}
       </div>
 
-      <ConversationThread
-        className="flex-1"
-        comments={comments}
-        currentUserId={currentUserId}
-        onRetryComment={retryComment}
-        ticketId={ticketId}
-      />
+      {showInitialLoader ? (
+        <div className="flex flex-1 items-center justify-center rounded-lg border border-slate-200 bg-slate-50">
+          <div className="flex flex-col items-center gap-3 text-sm font-semibold text-slate-600">
+            <ClipLoader color="#2563eb" size={34} speedMultiplier={0.9} />
+            <span>Loading chat...</span>
+          </div>
+        </div>
+      ) : (
+        <ConversationThread
+          className="flex-1"
+          comments={comments}
+          currentUserId={currentUserId}
+          onRetryComment={retryComment}
+          ticketId={ticketId}
+        />
+      )}
 
       <div className="mt-4 shrink-0 border-t border-slate-200 pt-4">
         {canReply ? (

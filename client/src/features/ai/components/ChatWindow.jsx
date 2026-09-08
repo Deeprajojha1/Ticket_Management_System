@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useChatScroll } from "../hooks/useChatScroll.js";
 import { useSpeechPlayer } from "../hooks/useSpeechPlayer.js";
@@ -134,6 +134,7 @@ const exportPdf = (messages) => {
 
 const ChatWindow = ({ compact = false, onClose }) => {
   const [conversationId, setConversationId] = useState(getStoredConversationId);
+  const isStartingFreshRef = useRef(false);
   const [draft, setDraft] = useState("");
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [localMessages, setLocalMessages] = useState([]);
@@ -159,7 +160,7 @@ const ChatWindow = ({ compact = false, onClose }) => {
   const displayMessages = useMemo(() => messages.filter((message) => message.role !== "system"), [messages]);
 
   useEffect(() => {
-    if (!conversationId && conversations[0]?._id) {
+    if (!conversationId && !isStartingFreshRef.current && conversations[0]?._id) {
       setConversationId(conversations[0]._id);
     }
   }, [conversationId, conversations]);
@@ -224,6 +225,7 @@ const ChatWindow = ({ compact = false, onClose }) => {
   };
 
   const startNew = () => {
+    isStartingFreshRef.current = true;
     setConversationId(null);
     storeConversationId(null);
     setLocalMessages([]);
@@ -257,7 +259,10 @@ const ChatWindow = ({ compact = false, onClose }) => {
           activeConversationId={conversationId}
           conversations={conversations}
           onDelete={removeConversation}
-          onSelect={(item) => setConversationId(item._id)}
+          onSelect={(item) => {
+            isStartingFreshRef.current = false;
+            setConversationId(item._id);
+          }}
         />
       ) : null}
       {compact && isHistoryOpen ? (
@@ -270,6 +275,7 @@ const ChatWindow = ({ compact = false, onClose }) => {
             onClose={() => setIsHistoryOpen(false)}
             onDelete={removeConversation}
             onSelect={(item) => {
+              isStartingFreshRef.current = false;
               setConversationId(item._id);
               setIsHistoryOpen(false);
             }}
@@ -280,7 +286,6 @@ const ChatWindow = ({ compact = false, onClose }) => {
         <ChatHeader
           compact={compact}
           onClose={onClose}
-          onClear={startNew}
           onCopyConversation={copyConversation}
           onExportPdf={() => exportPdf(displayMessages)}
           onNewChat={startNew}

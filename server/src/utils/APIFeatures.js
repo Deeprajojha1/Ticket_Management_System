@@ -27,6 +27,20 @@ class APIFeatures {
       }
     });
 
+    if (this.queryString.startDate || this.queryString.endDate) {
+      filters.createdAt = {};
+
+      if (this.queryString.startDate) {
+        filters.createdAt.$gte = new Date(this.queryString.startDate);
+      }
+
+      if (this.queryString.endDate) {
+        const endDate = new Date(this.queryString.endDate);
+        endDate.setHours(23, 59, 59, 999);
+        filters.createdAt.$lte = endDate;
+      }
+    }
+
     this.query = this.query.find(filters);
     return this;
   }

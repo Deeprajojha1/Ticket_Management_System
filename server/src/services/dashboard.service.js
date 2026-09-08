@@ -127,6 +127,8 @@ const buildSearchStages = (search) => {
           { description: regex },
           { "createdBy.fullName": regex },
           { "createdBy.email": regex },
+          { "assignedAgent.fullName": regex },
+          { "assignedAgent.email": regex },
         ],
       },
     });

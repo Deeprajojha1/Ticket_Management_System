@@ -1,5 +1,10 @@
 import { formatDate } from "../tickets/utils.js";
 
+const formatCsvDate = (value, options) => {
+  const formattedDate = formatDate(value, options);
+  return formattedDate === "-" ? "" : `\t${formattedDate}`;
+};
+
 export const exportTicketsCsv = (tickets = []) => {
   const headers = [
     "Ticket Number",
@@ -22,13 +27,13 @@ export const exportTicketsCsv = (tickets = []) => {
     ticket.priority,
     ticket.status,
     ticket.assignedAgent?.fullName || "Unassigned",
-    formatDate(ticket.createdAt),
-    formatDate(ticket.lastActivity, { withTime: true }),
+    formatCsvDate(ticket.createdAt),
+    formatCsvDate(ticket.lastActivity, { withTime: true }),
   ]);
   const csv = [headers, ...rows]
     .map((row) => row.map((value) => `"${String(value).replaceAll('"', '""')}"`).join(","))
-    .join("\n");
-  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
+    .join("\r\n");
+  const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8;" }));
   const link = document.createElement("a");
   link.href = url;
   link.download = "supportdesk-agent-tickets.csv";
