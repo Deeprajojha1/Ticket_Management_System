@@ -23,6 +23,7 @@ export const sendChatMessage = async ({ user, payload, files = [] }) => {
   const conversation = await getOrCreateConversation({
     user,
     conversationId: payload.conversationId,
+    createIfMissing: true,
   });
   const attachments = await uploadChatAttachments(files);
   const history = await getConversationHistory(conversation._id);
@@ -69,12 +70,15 @@ export const sendChatMessage = async ({ user, payload, files = [] }) => {
 
 export const transcribeAudio = async ({ user, payload, file }) => {
   const transcript = await transcribeAudioFile(file);
+  let nextConversationId = payload.conversationId || null;
 
   if (payload.conversationId && transcript) {
     const conversation = await getOrCreateConversation({
       user,
       conversationId: payload.conversationId,
+      createIfMissing: true,
     });
+    nextConversationId = conversation._id;
 
     await addMessage({
       conversation,
@@ -90,7 +94,7 @@ export const transcribeAudio = async ({ user, payload, file }) => {
     });
   }
 
-  return { transcript, conversationId: payload.conversationId || null };
+  return { transcript, conversationId: nextConversationId };
 };
 
 export const textToSpeech = async ({ text }) => {

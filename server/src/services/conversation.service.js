@@ -4,7 +4,7 @@ import Conversation from "../models/Conversation.model.js";
 import ApiError from "../utils/ApiError.js";
 import { AI_CONVERSATION_STATUS, AI_MESSAGE_ROLES } from "../utils/constants.js";
 
-export const getOrCreateConversation = async ({ user, conversationId }) => {
+export const getOrCreateConversation = async ({ user, conversationId, createIfMissing = false }) => {
   if (conversationId) {
     const conversation = await Conversation.findOne({
       _id: conversationId,
@@ -13,6 +13,13 @@ export const getOrCreateConversation = async ({ user, conversationId }) => {
     });
 
     if (!conversation) {
+      if (createIfMissing) {
+        return Conversation.create({
+          user: user._id,
+          sessionId: uuidv4(),
+        });
+      }
+
       throw new ApiError(404, "Conversation not found");
     }
 

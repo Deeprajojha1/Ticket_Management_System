@@ -12,7 +12,7 @@ import validate from "../middlewares/validate.middleware.js";
 import { loginValidator, registerValidator } from "../validators/auth.validator.js";
 
 const router = Router();
-
+// Future implementation of rate limiter for auth routes
 const authRateLimiter = (req, res, next) => next();
 
 router.post("/register", authRateLimiter, registerValidator, validate, register);

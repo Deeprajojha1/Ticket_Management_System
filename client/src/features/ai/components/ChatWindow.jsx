@@ -166,6 +166,17 @@ const ChatWindow = ({ compact = false, onClose }) => {
   }, [conversationId, conversations]);
 
   useEffect(() => {
+    if (conversation.error?.status !== 404) return;
+
+    isStartingFreshRef.current = true;
+    setConversationId(null);
+    storeConversationId(null);
+    setLocalMessages([]);
+    setPendingMessages([]);
+    setFailedMessages([]);
+  }, [conversation.error?.status]);
+
+  useEffect(() => {
     storeConversationId(conversationId);
   }, [conversationId]);
 
@@ -194,7 +205,9 @@ const ChatWindow = ({ compact = false, onClose }) => {
       setPendingMessages((current) => current.map((item) => (
         item._id === pendingMessage._id ? { ...item, status: "sent" } : item
       )));
-      if (!conversationId) setLocalMessages((current) => [...current, asMessage("user", message), asMessage("assistant", reply)]);
+      if (!conversationId || nextConversationId !== conversationId) {
+        setLocalMessages((current) => [...current, asMessage("user", message), asMessage("assistant", reply)]);
+      }
       toast.success("AI response ready");
     } catch (error) {
       const errorMessage = getApiErrorMessage(error, "AI request failed");
@@ -217,6 +230,8 @@ const ChatWindow = ({ compact = false, onClose }) => {
     try {
       const file = new File([blob], "voice-message.webm", { type: "audio/webm" });
       const response = await transcribe({ audio: file, conversationId }).unwrap();
+      const nextConversationId = response?.data?.conversationId;
+      if (nextConversationId) setConversationId(nextConversationId);
       setDraft(response?.data?.transcript || "");
       toast.success("Transcript ready");
     } catch (error) {
